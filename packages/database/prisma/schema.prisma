@@ -1,0 +1,119 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  name         String
+  passwordHash String?       @map("password_hash")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  wallets      Wallet[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  name         String
+  balance      Decimal       @default(0) @db.Decimal(18, 2)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Category {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String?       @map("user_id") @db.Uuid
+  name         String
+  icon         String        // Lucide icon identifier, e.g. "utensils", "car", "shopping-cart"
+  color        String        // Hex color code, e.g. "#EF4444"
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id              String            @id @default(uuid()) @db.Uuid
+  userId          String            @map("user_id") @db.Uuid
+  walletId        String            @map("wallet_id") @db.Uuid
+  categoryId      String?           @map("category_id") @db.Uuid
+  amount          Decimal           @db.Decimal(18, 2)
+  type            TransactionType
+  date            DateTime          @db.Timestamptz(6)
+  merchantName    String?           @map("merchant_name")
+  notes           String?
+  receiptImageUrl String?           @map("receipt_image_url")
+  rawOcrData      Json?             @map("raw_ocr_data")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  items           TransactionItem[]
+
+  @@index([userId, date])
+  @@index([walletId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String      @id @default(uuid()) @db.Uuid
+  transactionId String      @map("transaction_id") @db.Uuid
+  name          String
+  price         Decimal     @db.Decimal(18, 2)
+  quantity      Int         @default(1)
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@map("transaction_items")
+}
+
+model Budget {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  limitAmount Decimal  @map("limit_amount") @db.Decimal(18, 2)
+  month       Int      // 1 - 12
+  year        Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId, month, year])
+  @@map("budgets")
+}

@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "FinTrack OCR",
+    "slug": "fintrack-ocr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090710"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aplikasi membutuhkan izin kamera untuk memindai struk belanja fisik."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#090710"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Izinkan aplikasi mengakses kamera untuk memindai struk belanja."
+        }
+      ]
+    ],
+    "scheme": "fintrack",
+    "extra": {
+      "apiBaseUrl": "http://10.0.2.2:3000"
+    }
+  }
+}
