@@ -1,0 +1,28 @@
+image: node:20
+
+stages:
+  - test
+  - build
+
+cache:
+  paths:
+    - .pnpm-store
+
+before_script:
+  - corepack enable
+  - corepack prepare pnpm@latest --activate
+  - pnpm config set store-dir .pnpm-store
+  - pnpm install --no-frozen-lockfile
+
+build_web:
+  stage: build
+  script:
+    - pnpm --filter @fintrack/web build
+  variables:
+    NEXT_PUBLIC_SUPABASE_URL: "https://demo.supabase.co"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "demo-anon-key"
+    DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/fintrack"
+    ENABLE_MOCK_AI: "true"
+  only:
+    - main
+    - merge_requests

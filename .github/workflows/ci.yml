@@ -1,0 +1,36 @@
+name: CI & Deployment Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-build:
+    name: Verify Web & Shared Packages Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Web Application
+        run: pnpm --filter @fintrack/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://demo.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "demo-anon-key"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/fintrack"
+          ENABLE_MOCK_AI: "true"
