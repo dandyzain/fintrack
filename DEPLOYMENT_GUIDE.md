@@ -4,9 +4,11 @@ Dokumentasi ini menjelaskan langkah-langkah untuk mendeploy aplikasi web **FinTr
 
 ---
 
-## 🌐 1. Deploy Aplikasi Web ke Vercel
+## 🌐 1. Deploy Aplikasi Web ke Vercel (Status: ✅ LIVE PRODUCTION)
 
-Aplikasi web Next.js telah diuji dan berhasil di-compile untuk produksi (`next build` 100% lulus). Konfigurasi monorepo `vercel.json` telah disediakan di root dan di `apps/web`.
+Aplikasi web telah berhasil di-deploy ke Vercel Production:
+* **Live Production URL:** [https://finance-tracker-taupe-six.vercel.app](https://finance-tracker-taupe-six.vercel.app)
+* **Vercel Project Dashboard:** [https://vercel.com/dandy-rahmat-zains-projects/finance-tracker](https://vercel.com/dandy-rahmat-zains-projects/finance-tracker)
 
 ### Cara 1: Menghubungkan GitHub ke Vercel (Rekomendasi)
 1. Kunjungi [vercel.com/new](https://vercel.com/new) dan masuk dengan akun GitHub Anda.
