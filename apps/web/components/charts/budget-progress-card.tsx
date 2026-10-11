@@ -4,13 +4,14 @@ import React from "react";
 import type { CategoryBudgetComparison } from "@fintrack/shared";
 import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { localizeCategoryName } from "@/lib/i18n/translations";
 
 interface BudgetProgressCardProps {
   comparisons: CategoryBudgetComparison[];
 }
 
 export function BudgetProgressCard({ comparisons }: BudgetProgressCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (!comparisons || comparisons.length === 0) {
     return (
@@ -39,7 +40,7 @@ export function BudgetProgressCard({ comparisons }: BudgetProgressCardProps) {
                   style={{ backgroundColor: item.categoryColor || "#6366F1" }}
                 />
                 <span className="font-bold text-slate-900 dark:text-white text-xs tracking-tight">
-                  {item.categoryName}
+                  {localizeCategoryName(item.categoryName, language)}
                 </span>
               </div>
 

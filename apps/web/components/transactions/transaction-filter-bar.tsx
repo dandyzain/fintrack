@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { localizeCategoryName, localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletItem {
   id: string;
@@ -138,7 +139,7 @@ export function TransactionFilterBar({
               </option>
               {wallets.map((w) => (
                 <option key={w.id} value={w.id}>
-                  {w.name}
+                  {localizeWalletName(w.name, language)}
                 </option>
               ))}
             </select>
@@ -157,7 +158,7 @@ export function TransactionFilterBar({
               </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {localizeCategoryName(c.name, language)}
                 </option>
               ))}
             </select>

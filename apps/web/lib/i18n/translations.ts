@@ -544,3 +544,109 @@ type DeepStringRecord<T> = {
 };
 
 export type TranslationSchema = DeepStringRecord<typeof translations.en>;
+
+const CATEGORY_MAP: Record<string, { en: string; id: string }> = {
+  "Makanan & Minuman": { en: "Food & Dining", id: "Makanan & Minuman" },
+  "Food & Beverage": { en: "Food & Dining", id: "Makanan & Minuman" },
+  "Food & Dining": { en: "Food & Dining", id: "Makanan & Minuman" },
+  "Belanja Bulanan": { en: "Monthly Groceries", id: "Belanja Bulanan" },
+  "Groceries": { en: "Monthly Groceries", id: "Belanja Bulanan" },
+  "Monthly Groceries": { en: "Monthly Groceries", id: "Belanja Bulanan" },
+  "Transportasi": { en: "Transportation", id: "Transportasi" },
+  "Transportation": { en: "Transportation", id: "Transportasi" },
+  "Kesehatan": { en: "Healthcare", id: "Kesehatan" },
+  "Healthcare": { en: "Healthcare", id: "Kesehatan" },
+  "Hiburan": { en: "Entertainment", id: "Hiburan" },
+  "Entertainment": { en: "Entertainment", id: "Hiburan" },
+  "Lainnya": { en: "Other", id: "Lainnya" },
+  "Other": { en: "Other", id: "Lainnya" },
+  "Gaji & Pendapatan": { en: "Salary & Income", id: "Gaji & Pendapatan" },
+  "Salary & Income": { en: "Salary & Income", id: "Gaji & Pendapatan" },
+  "Tagihan & Utilitas": { en: "Bills & Utilities", id: "Tagihan & Utilitas" },
+  "Bills & Utilities": { en: "Bills & Utilities", id: "Tagihan & Utilitas" },
+  "Pendidikan": { en: "Education", id: "Pendidikan" },
+  "Education": { en: "Education", id: "Pendidikan" },
+  "Investasi": { en: "Investments", id: "Investasi" },
+  "Investments": { en: "Investments", id: "Investasi" },
+};
+
+const WALLET_MAP: Record<string, { en: string; id: string }> = {
+  "BCA Tabungan": { en: "BCA Savings", id: "BCA Tabungan" },
+  "BCA Savings": { en: "BCA Savings", id: "BCA Tabungan" },
+  "Dompet Tunai": { en: "Cash Wallet", id: "Dompet Tunai" },
+  "Dompet Tunai (Cash)": { en: "Cash Wallet", id: "Dompet Tunai (Cash)" },
+  "Cash Wallet": { en: "Cash Wallet", id: "Dompet Tunai (Cash)" },
+  "GoPay / OVO": { en: "GoPay / OVO", id: "GoPay / OVO" },
+  "Rekening Bank": { en: "Bank Account", id: "Rekening Bank" },
+  "Bank Account": { en: "Bank Account", id: "Rekening Bank" },
+  "E-Wallet": { en: "E-Wallet", id: "E-Wallet" },
+};
+
+const NOTE_MAP: Record<string, { en: string; id: string }> = {
+  "Ongkos ke kantor": { en: "Commute to office", id: "Ongkos ke kantor" },
+  "Makan siang bersama tim": { en: "Team lunch", id: "Makan siang bersama tim" },
+  "Belanja kebutuhan pokok mingguan": { en: "Weekly grocery shopping", id: "Belanja kebutuhan pokok mingguan" },
+  "Kopi sore & meeting client": { en: "Afternoon coffee & client chat", id: "Kopi sore & meeting client" },
+  "Gaji Pokok Bulanan": { en: "Monthly Base Salary", id: "Gaji Pokok Bulanan" },
+  "Bonus Proyek": { en: "Project Bonus", id: "Bonus Proyek" },
+};
+
+export function localizeCategoryName(name?: string | null, lang: Language = "en"): string {
+  if (!name) return "";
+  const match = CATEGORY_MAP[name.trim()];
+  return match ? match[lang] : name;
+}
+
+export function localizeWalletName(name?: string | null, lang: Language = "en"): string {
+  if (!name) return "";
+  const match = WALLET_MAP[name.trim()];
+  return match ? match[lang] : name;
+}
+
+export function localizeTransactionNote(note?: string | null, lang: Language = "en"): string {
+  if (!note) return "";
+  const match = NOTE_MAP[note.trim()];
+  return match ? match[lang] : note;
+}
+
+export function getLocalizedHealthAdvisory(
+  score: number,
+  savingsRatio: number = 0,
+  expenseRatio: number = 0,
+  lang: Language = "en"
+): { label: string; message: string } {
+  if (score >= 90) {
+    return {
+      label: lang === "en" ? "Optimal Health" : "Sangat Prima",
+      message:
+        lang === "en"
+          ? `Outstanding! Your savings ratio has reached ${savingsRatio}%. Keep up this strong financial discipline.`
+          : `Luar biasa! Rasio tabungan Anda mencapai ${savingsRatio}%. Pertahankan disiplin finansial ini.`,
+    };
+  }
+  if (score >= 75) {
+    return {
+      label: lang === "en" ? "Healthy & Stable" : "Sehat & Stabil",
+      message:
+        lang === "en"
+          ? `Expenses this month are well-balanced (${expenseRatio}% of total income).`
+          : `Pengeluaran bulan ini berada pada batas yang wajar (${expenseRatio}% dari total pemasukan).`,
+    };
+  }
+  if (score >= 50) {
+    return {
+      label: lang === "en" ? "Needs Attention" : "Perlu Perhatian",
+      message:
+        lang === "en"
+          ? "Spending is approaching or exceeding budget caps in some categories. Monitor your monthly expenses."
+          : "Pengeluaran mendekati atau melampaui pagu anggaran di beberapa kategori. Cermati pos belanja bulanan.",
+    };
+  }
+  return {
+    label: lang === "en" ? "Deficit Spending" : "Defisit Pengeluaran",
+    message:
+      lang === "en"
+        ? "Expenses have exceeded this month's income. Review and adjust priority spending."
+        : "Pengeluaran telah melebihi pemasukan bulan ini. Tinjau kembali pos pengeluaran prioritas.",
+  };
+}

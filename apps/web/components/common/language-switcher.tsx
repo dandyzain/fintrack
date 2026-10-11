@@ -6,52 +6,22 @@ import { Globe } from "lucide-react";
 
 interface LanguageSwitcherProps {
   className?: string;
-  showIcon?: boolean;
 }
 
-export function LanguageSwitcher({
-  className = "",
-  showIcon = true,
-}: LanguageSwitcherProps) {
-  const { language, setLanguage } = useLanguage();
+export function LanguageSwitcher({ className = "" }: LanguageSwitcherProps) {
+  const { language, toggleLanguage } = useLanguage();
 
   return (
-    <div
-      className={`inline-flex items-center p-0.5 sm:p-1 bg-white/80 dark:bg-[#121826]/80 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md ${className}`}
-      role="group"
-      aria-label="Language Selector"
+    <button
+      type="button"
+      onClick={toggleLanguage}
+      aria-label={`Current language: ${language.toUpperCase()}. Click to toggle language`}
+      title={language === "en" ? "Ganti ke Bahasa Indonesia (ID)" : "Switch to English (EN)"}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#121826]/80 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1B2337] hover:border-violet-500/40 transition shadow-sm backdrop-blur-md cursor-pointer select-none text-xs font-bold ${className}`}
     >
-      {showIcon && (
-        <span className="hidden sm:inline-flex px-1.5 text-slate-400 dark:text-slate-500">
-          <Globe className="w-3.5 h-3.5" />
-        </span>
-      )}
-      <button
-        type="button"
-        onClick={() => setLanguage("en")}
-        aria-label="Switch to English"
-        className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
-          language === "en"
-            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-        }`}
-      >
-        <span className="text-[11px]">🇬🇧</span>
-        <span>EN</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setLanguage("id")}
-        aria-label="Beralih ke Bahasa Indonesia"
-        className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
-          language === "id"
-            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-        }`}
-      >
-        <span className="text-[11px]">🇮🇩</span>
-        <span>ID</span>
-      </button>
-    </div>
+      <Globe className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+      <span className="tracking-wider font-extrabold uppercase">{language}</span>
+    </button>
   );
 }
+

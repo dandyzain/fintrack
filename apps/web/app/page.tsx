@@ -35,6 +35,7 @@ import { ManualTransactionModal } from "@/components/modals/manual-transaction-m
 import { WalletManagementModal } from "@/components/modals/wallet-management-modal";
 import { useLanguage } from "@/context/language-context";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
+import { localizeCategoryName, localizeWalletName, localizeTransactionNote } from "@/lib/i18n/translations";
 import type { DashboardAnalyticsResponse, AuthUser } from "@fintrack/shared";
 
 interface WalletItem {
@@ -237,7 +238,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
           <RefreshCw className="w-3.5 h-3.5 animate-spin text-violet-500" />
-          <span>Memverifikasi sesi & memuat FinTrack...</span>
+          <span>{language === "id" ? "Memverifikasi sesi & memuat FinTrack..." : "Verifying session & loading FinTrack..."}</span>
         </div>
       </div>
     );
@@ -267,7 +268,7 @@ export default function DashboardPage() {
                 <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
                   FinTrack
                 </span>
-                <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)] flex items-center gap-1">
+                <span className="hidden sm:inline-flex text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)] items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Creative
                 </span>
               </div>
@@ -607,7 +608,7 @@ export default function DashboardPage() {
                         {t.dashboard.walletName}
                       </p>
                       <p className="font-bold text-white text-xs truncate max-w-[130px]">
-                        {w.name}
+                        {localizeWalletName(w.name, language)}
                       </p>
                     </div>
                     <div className="text-right">
@@ -783,7 +784,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
                             <span>{formattedDate}</span>
                             <span>•</span>
-                            <span className="text-slate-500 dark:text-slate-400 font-medium truncate">{tx.wallet.name}</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-medium truncate">{localizeWalletName(tx.wallet.name, language)}</span>
                           </div>
                           {tx.category && (
                             <div className="mt-1">
@@ -792,7 +793,7 @@ export default function DashboardPage() {
                                   className="w-1.5 h-1.5 rounded-full shadow-sm"
                                   style={{ backgroundColor: tx.category.color }}
                                 />
-                                {tx.category.name}
+                                {localizeCategoryName(tx.category.name, language)}
                               </span>
                             </div>
                           )}
@@ -854,14 +855,14 @@ export default function DashboardPage() {
                                     className="w-2 h-2 rounded-full shadow-sm"
                                     style={{ backgroundColor: tx.category.color }}
                                   />
-                                  {tx.category.name}
+                                  {localizeCategoryName(tx.category.name, language)}
                                 </span>
                               ) : (
                                 <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
                               )}
                             </td>
                             <td className="py-3.5 pr-2 text-slate-600 dark:text-slate-300 text-xs font-semibold">
-                              {tx.wallet.name}
+                              {localizeWalletName(tx.wallet.name, language)}
                             </td>
                             <td className="py-3.5 pr-2">
                               {tx.receiptImageUrl ? (
@@ -897,16 +898,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Footer Copyright Notice */}
-          <footer className="pt-8 pb-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-200/60 dark:border-white/5">
-            <p className="font-medium">
-              {t.footer.copyright}
-            </p>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">
-              {t.footer.createdByPrefix}{" "}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{t.footer.authorName}</span>
-            </p>
-          </footer>
         </div>
       </main>
 

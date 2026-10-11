@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { DashboardAnalyticsResponse } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
+import { getLocalizedHealthAdvisory, localizeCategoryName } from "@/lib/i18n/translations";
 
 interface AnalyticsStatsHubProps {
   analytics: DashboardAnalyticsResponse | null;
@@ -36,11 +37,17 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
   const receiptCount = metrics?.receiptScanCount || 0;
   const receiptTotal = metrics?.receiptScanTotalAmount || 0;
 
-  // Financial health status
+  // Financial health status with language localization
   const healthScore = financialHealth?.score ?? 88;
-  const healthLabel = financialHealth?.label ?? "Optimal Health";
   const healthStatus = financialHealth?.status ?? "HEALTHY";
-  const healthMessage = financialHealth?.message ?? "Pengeluaran Anda sangat terkendali dengan rasio arus kas positif.";
+  const localizedAdvisory = getLocalizedHealthAdvisory(
+    healthScore,
+    metrics?.savingsRatio ?? 0,
+    metrics?.expenseToIncomeRatio ?? 0,
+    language
+  );
+  const healthLabel = localizedAdvisory.label;
+  const healthMessage = localizedAdvisory.message;
 
   const getHealthBadgeColor = () => {
     switch (healthStatus) {
@@ -146,7 +153,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
             {largestTx ? `Rp ${Number(largestTx.amount).toLocaleString("id-ID")}` : "-"}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate font-medium">
-            {largestTx ? largestTx.merchantName || t.analytics.manualTxLabel : t.analytics.noExpenseYet}
+            {largestTx ? (localizeCategoryName(largestTx.merchantName, language) || largestTx.merchantName || t.analytics.manualTxLabel) : t.analytics.noExpenseYet}
           </p>
         </div>
 
@@ -244,7 +251,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
                       width: `${Math.max(2, cat.percentage)}%`,
                       backgroundColor: cat.categoryColor || "#6366F1",
                     }}
-                    title={`${cat.categoryName}: ${cat.percentage}% (Rp ${cat.totalAmount.toLocaleString("id-ID")})`}
+                    title={`${localizeCategoryName(cat.categoryName, language)}: ${cat.percentage}% (Rp ${cat.totalAmount.toLocaleString("id-ID")})`}
                     className="h-full rounded-sm transition-all duration-300 hover:opacity-90"
                   />
                 ))}
@@ -263,7 +270,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
                         style={{ backgroundColor: cat.categoryColor }}
                       />
                       <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                        {cat.categoryName}
+                        {localizeCategoryName(cat.categoryName, language)}
                       </span>
                       <span className="text-[11px] text-slate-400 dark:text-slate-500">
                         ({cat.transactionCount}x)

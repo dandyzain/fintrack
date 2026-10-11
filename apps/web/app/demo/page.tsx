@@ -225,16 +225,6 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Footer Copyright Notice */}
-        <footer className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
-          <p className="font-medium">
-            {t.footer.copyright}
-          </p>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            {t.footer.createdByPrefix}{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{t.footer.authorName}</span>
-          </p>
-        </footer>
       </div>
     </div>
   );
