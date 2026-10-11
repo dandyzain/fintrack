@@ -16,8 +16,11 @@ import {
   Layers,
   ArrowLeft,
 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 
 export default function DemoPage() {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -70,22 +73,23 @@ export default function DemoPage() {
       <div className="pointer-events-none absolute -top-32 left-1/4 w-96 h-96 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-full blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-96 h-96 bg-violet-600/10 dark:bg-violet-600/20 rounded-full blur-3xl" />
 
-      {/* Top Bar Navigation & Theme Switcher */}
+      {/* Top Bar Navigation & Language / Theme Switcher */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-20">
         <Link
           href="/login"
           className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-[#121826]/80 border border-slate-200/80 dark:border-white/10 rounded-xl transition shadow-sm backdrop-blur-md"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Login</span>
+          <span>{t.auth.backToLogin}</span>
         </Link>
       </div>
 
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-20">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-20 flex items-center gap-2">
+        <LanguageSwitcher />
         <button
           onClick={toggleDarkMode}
-          aria-label="Toggle Theme"
-          title={isDarkMode ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+          aria-label={t.nav.toggleTheme}
+          title={isDarkMode ? t.nav.themeLight : t.nav.themeDark}
           className="p-2 sm:p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#121826]/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1B2337] transition shadow-sm backdrop-blur-md"
         >
           {isDarkMode ? (
@@ -112,14 +116,14 @@ export default function DemoPage() {
 
             <div className="flex items-center justify-center gap-1.5 mb-1.5">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                FinTrack Demo Mode
+                {t.demo.demoTitle}
               </h1>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)] flex items-center gap-1">
                 <Zap className="w-2.5 h-2.5" /> Interactive
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal">
-              Eksplorasi seluruh fitur manajemen finansial & Vision AI OCR tanpa mendaftar
+              {t.demo.demoSubtitle}
             </p>
           </div>
 
@@ -138,7 +142,7 @@ export default function DemoPage() {
                 <CreditCard className="w-3.5 h-3.5" />
               </div>
               <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Virtual Cards</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Multi kantong saldo</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">Multi wallet balance</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/70 dark:border-white/5 text-center">
@@ -146,7 +150,7 @@ export default function DemoPage() {
                 <Receipt className="w-3.5 h-3.5" />
               </div>
               <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Vision OCR AI</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Ekstraksi struk fisik</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">Receipt scanner</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/70 dark:border-white/5 text-center">
@@ -154,7 +158,7 @@ export default function DemoPage() {
                 <ShieldCheck className="w-3.5 h-3.5" />
               </div>
               <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Health Meter</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Analisis rasio tabungan</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">Savings ratio score</p>
             </div>
           </div>
 
@@ -162,7 +166,7 @@ export default function DemoPage() {
           <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-600/5 to-cyan-500/5 dark:from-violet-600/10 dark:to-cyan-500/10 border border-violet-500/20 mb-6">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
-                Profil Pengguna Demo
+                {t.demo.sandboxProfile}
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] border border-emerald-500/20">
                 Ready to Test
@@ -193,12 +197,12 @@ export default function DemoPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Mempersiapkan Lingkungan Demo...</span>
+                <span>{t.demo.preparingDemo}</span>
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4" />
-                <span>Masuk ke Akun Demo (1-Click)</span>
+                <span>{t.demo.enterDemoBtn}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -210,13 +214,13 @@ export default function DemoPage() {
               href="/login"
               className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition font-medium"
             >
-              Sudah punya akun pribadi? <span className="font-bold text-violet-600 dark:text-violet-400">Masuk</span>
+              {t.demo.hasPersonalAccount} <span className="font-bold text-violet-600 dark:text-violet-400">{t.auth.signInBtn}</span>
             </Link>
             <Link
               href="/register"
               className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition font-medium"
             >
-              Daftar akun baru →
+              {t.demo.registerNewAccount}
             </Link>
           </div>
         </div>
@@ -224,11 +228,11 @@ export default function DemoPage() {
         {/* Footer Copyright Notice */}
         <footer className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
           <p className="font-medium">
-            &copy; 2026 <span className="font-semibold text-slate-700 dark:text-slate-300">FinTrack AI</span>. Hak Cipta Dilindungi Undang-Undang.
+            {t.footer.copyright}
           </p>
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            Didesain dan Dikembangkan oleh{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Dandy Rahmat Zain</span>
+            {t.footer.createdByPrefix}{" "}
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{t.footer.authorName}</span>
           </p>
         </footer>
       </div>

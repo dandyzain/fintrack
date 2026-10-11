@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { ReceiptExtraction, ReceiptItem } from "@fintrack/shared";
+import { useLanguage } from "@/context/language-context";
 
 interface WalletOption {
   id: string;
@@ -44,6 +45,7 @@ export function ReceiptScannerModal({
   categories,
   onTransactionSaved,
 }: ReceiptScannerModalProps) {
+  const { t } = useLanguage();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -86,7 +88,7 @@ export function ReceiptScannerModal({
 
   const handleScan = async () => {
     if (!selectedFile) {
-      setErrorMsg("Pilih gambar struk terlebih dahulu.");
+      setErrorMsg(t.modals.selectReceiptError);
       return;
     }
 
@@ -104,7 +106,7 @@ export function ReceiptScannerModal({
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal memindai struk belanja.");
+        throw new Error(json.error || t.modals.scanFailed);
       }
 
       const extraction: ReceiptExtraction =
@@ -168,11 +170,11 @@ export function ReceiptScannerModal({
 
   const handleConfirmSave = async () => {
     if (!selectedWalletId) {
-      setErrorMsg("Pilih dompet sumber pembayaran.");
+      setErrorMsg(t.modals.sourceWalletRequired);
       return;
     }
     if (totalAmount <= 0) {
-      setErrorMsg("Total nominal transaksi harus lebih dari 0.");
+      setErrorMsg(t.modals.amountZeroError);
       return;
     }
 
@@ -221,7 +223,7 @@ export function ReceiptScannerModal({
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal menyimpan transaksi.");
+        throw new Error(json.error || t.modals.saveFailed);
       }
 
       // Success Celebration Animation
@@ -258,10 +260,10 @@ export function ReceiptScannerModal({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              Transaksi Berhasil Disimpan!
+              {t.modals.celebrationTitle}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs font-medium">
-              Saldo dompet telah diperbarui secara otomatis dan laporan keuangan telah disegarkan.
+              {t.modals.celebrationSubtitle}
             </p>
           </div>
         )}
@@ -276,8 +278,8 @@ export function ReceiptScannerModal({
               <div className="flex items-center gap-1.5">
                 <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
                   {scanStep === "upload"
-                    ? "Pindai Struk Belanja (Vision AI)"
-                    : "Tinjau & Konfirmasi Ekstraksi Struk"}
+                    ? t.modals.scannerTitle
+                    : t.modals.reviewTitle}
                 </h2>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/20 flex items-center gap-1">
                   <Zap className="w-2.5 h-2.5" /> AI Vision
@@ -285,8 +287,8 @@ export function ReceiptScannerModal({
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
                 {scanStep === "upload"
-                  ? "Ekstraksi data struk belanja instan bertenaga Vision AI"
-                  : "Periksa kembali nominal sebelum dimasukkan ke pembukuan"}
+                  ? t.modals.scannerSubtitle
+                  : t.modals.reviewSubtitle}
               </p>
             </div>
           </div>
@@ -327,12 +329,12 @@ export function ReceiptScannerModal({
                   </div>
                   <div>
                     <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm hover:underline">
-                      Pilih foto struk belanja
+                      {t.modals.selectReceiptPhoto}
                     </span>{" "}
-                    <span className="text-slate-400 dark:text-slate-500 text-xs font-normal">atau seret berkas ke sini</span>
+                    <span className="text-slate-400 dark:text-slate-500 text-xs font-normal">{t.modals.orDragFileHere}</span>
                   </div>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                    Mendukung JPG, PNG, WebP (maksimal 10MB)
+                    {t.modals.supportedFormatsShort}
                   </p>
                 </label>
               </div>
@@ -343,7 +345,7 @@ export function ReceiptScannerModal({
                   <div className="w-20 h-24 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex-shrink-0 relative self-center sm:self-auto shadow-sm">
                     <img
                       src={previewUrl}
-                      alt="Preview Struk"
+                      alt="Preview Receipt"
                       className="w-full h-full object-cover"
                     />
 
@@ -362,7 +364,7 @@ export function ReceiptScannerModal({
                     {isScanning && (
                       <div className="mt-2 flex items-center gap-2 text-[11px] text-cyan-600 dark:text-cyan-400 font-bold animate-pulse">
                         <ScanLine className="w-3.5 h-3.5 animate-spin" />
-                        <span>Menganalisis teks & angka struk dengan Vision AI...</span>
+                        <span>{t.modals.analyzingOcr}</span>
                       </div>
                     )}
                   </div>
@@ -387,27 +389,27 @@ export function ReceiptScannerModal({
               <div className="p-3 bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-cyan-500/20 rounded-2xl text-slate-700 dark:text-slate-300 text-xs flex items-start sm:items-center gap-2.5">
                 <Sparkles className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5 sm:mt-0" />
                 <span className="font-medium">
-                  Hasil ekstraksi Vision AI siap dikoreksi. Pastikan nominal dan dompet sumber dana sudah tepat sebelum konfirmasi.
+                  {t.modals.reviewNotice}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Nama Toko / Merchant
+                    {t.modals.merchantName}
                   </label>
                   <input
                     type="text"
                     value={merchantName}
                     onChange={(e) => setMerchantName(e.target.value)}
-                    placeholder="Contoh: Indomaret, Superindo"
+                    placeholder={t.modals.merchantPlaceholder}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Tanggal Transaksi
+                    {t.modals.dateLabel}
                   </label>
                   <input
                     type="date"
@@ -419,7 +421,7 @@ export function ReceiptScannerModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Total Pembayaran (Rp) *
+                    {t.modals.totalAmount} (Rp) *
                   </label>
                   <input
                     type="number"
@@ -431,7 +433,7 @@ export function ReceiptScannerModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Dompet Sumber Dana *
+                    {t.modals.walletSelect}
                   </label>
                   <select
                     value={selectedWalletId}
@@ -448,14 +450,14 @@ export function ReceiptScannerModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Kategori Pengeluaran
+                    {t.modals.categorySelect}
                   </label>
                   <select
                     value={selectedCategoryId}
                     onChange={(e) => setSelectedCategoryId(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition font-semibold"
                   >
-                    <option value="" className="dark:bg-slate-900 dark:text-slate-100">Pilih Kategori</option>
+                    <option value="" className="dark:bg-slate-900 dark:text-slate-100">{t.modals.selectCategoryPlaceholder}</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id} className="dark:bg-slate-900 dark:text-slate-100">
                         {c.name}
@@ -466,19 +468,19 @@ export function ReceiptScannerModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Pajak & Biaya Layanan
+                    {t.modals.taxAmount} & {t.modals.serviceAmount}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="number"
-                      placeholder="Pajak"
+                      placeholder={t.modals.tax}
                       value={tax}
                       onChange={(e) => setTax(Number(e.target.value))}
                       className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100"
                     />
                     <input
                       type="number"
-                      placeholder="Layanan"
+                      placeholder={t.modals.service}
                       value={serviceCharge}
                       onChange={(e) => setServiceCharge(Number(e.target.value))}
                       className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100"
@@ -491,7 +493,7 @@ export function ReceiptScannerModal({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Rincian Barang Belanja ({items.length})
+                    {t.modals.purchasedItems} ({items.length})
                   </span>
                   <button
                     type="button"
@@ -499,14 +501,14 @@ export function ReceiptScannerModal({
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 px-2 py-0.5 rounded-lg hover:bg-cyan-500/10 transition"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Item</span>
+                    <span>{t.modals.addItem}</span>
                   </button>
                 </div>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {items.length === 0 ? (
                     <div className="text-center py-4 text-xs text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
-                      Tidak ada rincian per-item yang terdeteksi.
+                      {t.modals.noItemsExtracted}
                     </div>
                   ) : (
                     items.map((item, idx) => (
@@ -518,14 +520,14 @@ export function ReceiptScannerModal({
                           type="text"
                           value={item.name}
                           onChange={(e) => handleItemChange(idx, "name", e.target.value)}
-                          placeholder="Nama item"
+                          placeholder={t.modals.itemName}
                           className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium"
                         />
                         <input
                           type="number"
                           value={item.quantity || 1}
                           onChange={(e) => handleItemChange(idx, "quantity", e.target.value)}
-                          placeholder="Qty"
+                          placeholder={t.modals.itemQty}
                           className="w-14 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center font-medium"
                         />
                         <div className="flex items-center gap-1">
@@ -533,7 +535,7 @@ export function ReceiptScannerModal({
                             type="number"
                             value={item.price || 0}
                             onChange={(e) => handleItemChange(idx, "price", e.target.value)}
-                            placeholder="Harga"
+                            placeholder={t.modals.itemPrice}
                             className="flex-1 sm:w-28 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-right font-medium"
                           />
                           <button
@@ -552,13 +554,13 @@ export function ReceiptScannerModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Catatan Tambahan
+                  {t.modals.notesLabel}
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Keterangan transaksi..."
+                  placeholder={t.modals.notesPlaceholder}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition"
                 />
               </div>
@@ -575,7 +577,7 @@ export function ReceiptScannerModal({
                 onClick={handleClose}
                 className="w-full sm:w-auto px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition text-center"
               >
-                Batal
+                {t.common.cancel}
               </button>
               <button
                 type="button"
@@ -586,12 +588,12 @@ export function ReceiptScannerModal({
                 {isScanning ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Mengekstrak dengan Vision AI...</span>
+                    <span>{t.modals.scanningReceipt}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Pindai Struk Sekarang</span>
+                    <span>{t.modals.startScanBtn}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -604,7 +606,7 @@ export function ReceiptScannerModal({
                 onClick={() => setScanStep("upload")}
                 className="w-full sm:w-auto px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition text-center"
               >
-                Pindai Ulang
+                {t.modals.reupload}
               </button>
               <button
                 type="button"
@@ -615,12 +617,12 @@ export function ReceiptScannerModal({
                 {isSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Menyimpan ke Database...</span>
+                    <span>{t.modals.savingToDb}</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Konfirmasi & Simpan Transaksi</span>
+                    <span>{t.modals.confirmAndSave}</span>
                   </>
                 )}
               </button>

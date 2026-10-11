@@ -33,6 +33,8 @@ import { TransactionFilterBar, type TransactionFilterState } from "@/components/
 import { ReceiptScannerModal } from "@/components/modals/receipt-scanner-modal";
 import { ManualTransactionModal } from "@/components/modals/manual-transaction-modal";
 import { WalletManagementModal } from "@/components/modals/wallet-management-modal";
+import { useLanguage } from "@/context/language-context";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 import type { DashboardAnalyticsResponse, AuthUser } from "@fintrack/shared";
 
 interface WalletItem {
@@ -62,6 +64,7 @@ interface TransactionItem {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -197,7 +200,7 @@ export default function DashboardPage() {
     0
   );
 
-  const currentMonthName = new Intl.DateTimeFormat("id-ID", {
+  const currentMonthName = new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-US", {
     month: "long",
     year: "numeric",
   }).format(new Date());
@@ -276,11 +279,14 @@ export default function DashboardPage() {
 
           {/* Action CTAs & User Controls */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
             {/* Dark Mode Toggle Button */}
             <button
               onClick={toggleDarkMode}
-              aria-label={isDarkMode ? "Beralih ke mode terang" : "Beralih ke mode gelap"}
-              title={isDarkMode ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+              aria-label={t.nav.toggleTheme}
+              title={isDarkMode ? t.nav.themeLight : t.nav.themeDark}
               className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#121826]/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1B2337] transition shadow-sm flex-shrink-0"
             >
               {isDarkMode ? (
@@ -296,7 +302,7 @@ export default function DashboardPage() {
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#121826] hover:bg-slate-50 dark:hover:bg-[#1B2337] border border-slate-200 dark:border-white/10 rounded-xl transition shadow-sm whitespace-nowrap"
             >
               <PlusCircle className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-              <span>Catat Manual</span>
+              <span>{t.nav.manualEntry}</span>
             </button>
 
             <button
@@ -304,7 +310,7 @@ export default function DashboardPage() {
               className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white glow-btn-cyan rounded-xl transition shadow-md whitespace-nowrap"
             >
               <Zap className="w-3.5 h-3.5 flex-shrink-0 text-white" />
-              <span>Pindai Struk AI</span>
+              <span>{t.nav.scanReceipt}</span>
             </button>
 
             {/* User Profile Badge & Logout */}
@@ -335,8 +341,8 @@ export default function DashboardPage() {
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  title="Keluar dari akun (Logout)"
-                  aria-label="Logout"
+                  title={t.nav.logout}
+                  aria-label={t.nav.logout}
                   className="p-1.5 sm:p-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#121826]/80 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-50 dark:hover:bg-[#1B2337] transition shadow-sm flex-shrink-0"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -353,7 +359,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <span>Dashboard Finansial</span>
+              <span>{t.nav.dashboardTitle}</span>
             </h1>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5 font-normal">
               <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-semibold">
@@ -362,13 +368,13 @@ export default function DashboardPage() {
               </span>
               <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
               <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold flex items-center gap-0.5 shadow-sm">
-                <ShieldCheck className="w-2.5 h-2.5 text-emerald-500" /> Real-time Cloud
+                <ShieldCheck className="w-2.5 h-2.5 text-emerald-500" /> {t.common.realTimeCloud}
               </span>
               {currentUser && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
-                    Akun: <strong className="text-slate-800 dark:text-slate-200">{currentUser.name}</strong>
+                    {t.nav.account} <strong className="text-slate-800 dark:text-slate-200">{currentUser.name}</strong>
                   </span>
                 </>
               )}
@@ -381,7 +387,7 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-[#121826]/80 hover:bg-slate-50 dark:hover:bg-[#1B2337] rounded-xl border border-slate-200/80 dark:border-white/10 shadow-sm transition flex-shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-violet-500" : ""}`} />
-            <span className="hidden sm:inline">Segarkan Data</span>
+            <span className="hidden sm:inline">{t.nav.refreshData}</span>
           </button>
         </div>
 
@@ -392,14 +398,14 @@ export default function DashboardPage() {
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl glow-btn-cyan text-white font-bold text-xs shadow-md active:scale-98 transition"
           >
             <Zap className="w-4 h-4 flex-shrink-0 text-white" />
-            <span>Pindai Struk AI</span>
+            <span>{t.nav.scanReceipt}</span>
           </button>
           <button
             onClick={() => setIsManualModalOpen(true)}
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/90 dark:bg-[#121826] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-sm active:scale-98 transition"
           >
             <PlusCircle className="w-4 h-4 text-violet-500 flex-shrink-0" />
-            <span>Catat Manual</span>
+            <span>{t.nav.manualEntry}</span>
           </button>
         </div>
 
@@ -413,10 +419,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                  Total Saldo Finansial
+                  {t.dashboard.totalBalance}
                 </span>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 flex items-center gap-1 shadow-sm">
-                  <ArrowUpRight className="w-3 h-3" /> +14.2% Bulan Ini
+                  <ArrowUpRight className="w-3 h-3" /> {t.dashboard.thisMonthGrowth}
                 </span>
               </div>
 
@@ -425,7 +431,9 @@ export default function DashboardPage() {
                 Rp {totalWalletBalance.toLocaleString("id-ID")}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
-                Tersinkronisasi otomatis pada {wallets.length} rekening & kantong aktif
+                {language === "id"
+                  ? `Tersinkronisasi otomatis pada ${wallets.length} rekening & kantong aktif`
+                  : `Auto-synced across ${wallets.length} active wallets & accounts`}
               </p>
             </div>
 
@@ -433,7 +441,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-5 mt-5 border-t border-slate-200/70 dark:border-white/10">
               <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
                 <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                  <ArrowDownRight className="w-3 h-3 text-rose-500" /> Pengeluaran
+                  <ArrowDownRight className="w-3 h-3 text-rose-500" /> {t.dashboard.expenseLegend}
                 </span>
                 <p className="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400 mt-0.5 truncate">
                   Rp {(analytics?.summary.totalExpense || 0).toLocaleString("id-ID")}
@@ -442,7 +450,7 @@ export default function DashboardPage() {
 
               <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
                 <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                  <ArrowUpRight className="w-3 h-3 text-cyan-400" /> Pemasukan
+                  <ArrowUpRight className="w-3 h-3 text-cyan-400" /> {t.dashboard.incomeLegend}
                 </span>
                 <p className="text-sm sm:text-base font-bold text-cyan-600 dark:text-cyan-400 mt-0.5 truncate">
                   Rp {(analytics?.summary.totalIncome || 0).toLocaleString("id-ID")}
@@ -451,7 +459,7 @@ export default function DashboardPage() {
 
               <div className="col-span-2 sm:col-span-1 p-3 rounded-xl bg-slate-50/80 dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
                 <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                  <PiggyBank className="w-3 h-3 text-violet-500" /> Arus Kas Bersih
+                  <PiggyBank className="w-3 h-3 text-violet-500" /> {t.dashboard.netCashflow}
                 </span>
                 <p className={`text-sm sm:text-base font-bold mt-0.5 truncate ${
                   (analytics?.summary.netSavings || 0) >= 0
@@ -512,18 +520,20 @@ export default function DashboardPage() {
                     {analytics?.financialHealth?.score ?? 88}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    DARI 100
+                    {language === "id" ? "DARI 100" : "OUT OF 100"}
                   </span>
                 </div>
               </div>
               <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-2 text-center">
-                Kondisi Finansial Prima
+                {language === "id" ? "Kondisi Finansial Prima" : "Optimal Financial Health"}
               </p>
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400">Rasio Tabungan</span>
-              <span className="font-bold text-violet-600 dark:text-violet-400">{savingsRate}% Bulan ini</span>
+              <span className="text-slate-500 dark:text-slate-400">{t.dashboard.savingsRate}</span>
+              <span className="font-bold text-violet-600 dark:text-violet-400">
+                {savingsRate}% {language === "id" ? "Bulan ini" : "This month"}
+              </span>
             </div>
           </div>
         </div>
@@ -536,20 +546,20 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-violet-500" />
-                <span>Virtual Card Deck (Kantong Keuangan)</span>
+                <span>{language === "id" ? "Virtual Card Deck (Kantong Keuangan)" : "Virtual Card Deck (Financial Pockets)"}</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                Alokasi saldo kartu debit & rekening aktif
+                {language === "id" ? "Alokasi saldo kartu debit & rekening aktif" : "Balance allocation for debit cards & accounts"}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsWalletModalOpen(true)}
                 className="inline-flex items-center gap-1 text-xs font-bold text-white glow-btn-violet px-3 py-1.5 rounded-xl transition shadow-sm"
-                title="Kelola Kantong (Tambah/Hapus)"
+                title={t.dashboard.manageWallets}
               >
                 <PlusCircle className="w-3.5 h-3.5" />
-                <span>+ Kelola Kantong</span>
+                <span>{t.dashboard.manageWallets}</span>
               </button>
             </div>
           </div>
@@ -583,7 +593,7 @@ export default function DashboardPage() {
                   {/* Card Middle: Balance */}
                   <div className="z-10 my-2">
                     <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">
-                      Saldo Tersedia
+                      {t.dashboard.availableBalance}
                     </p>
                     <p className="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
                       Rp {Number(w.balance).toLocaleString("id-ID")}
@@ -594,7 +604,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between z-10 pt-2 border-t border-white/10 text-xs">
                     <div>
                       <p className="text-[9px] text-slate-400 uppercase tracking-widest">
-                        NAMA KANTONG
+                        {t.dashboard.walletName}
                       </p>
                       <p className="font-bold text-white text-xs truncate max-w-[130px]">
                         {w.name}
@@ -619,10 +629,10 @@ export default function DashboardPage() {
                 <PlusCircle className="w-5 h-5" />
               </div>
               <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                Tambah Kantong Baru
+                {language === "id" ? "Tambah Kantong Baru" : "Add New Pocket"}
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                Rekening, e-wallet, atau tabungan
+                {language === "id" ? "Rekening, e-wallet, atau tabungan" : "Bank accounts, e-wallets, or savings"}
               </p>
             </div>
           </div>
@@ -643,20 +653,20 @@ export default function DashboardPage() {
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                  <span>Tren Arus Kas Harian (Pulse Wave)</span>
+                  <span>{language === "id" ? "Tren Arus Kas Harian (Pulse Wave)" : "Daily Cashflow Trend (Pulse Wave)"}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                  Komparasi gelombang pengeluaran vs pemasukan harian
+                  {language === "id" ? "Komparasi gelombang pengeluaran vs pemasukan harian" : "Daily comparison of outgoing vs incoming funds"}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs font-semibold self-start sm:self-auto">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[11px] font-bold">
                   <span className="w-2 h-2 rounded-full bg-rose-500 shadow-sm" />
-                  <span>Pengeluaran</span>
+                  <span>{t.dashboard.expenseLegend}</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[11px] font-bold">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm" />
-                  <span>Pemasukan</span>
+                  <span>{t.dashboard.incomeLegend}</span>
                 </div>
               </div>
             </div>
@@ -665,7 +675,7 @@ export default function DashboardPage() {
               <DailyTrendChart data={analytics.dailyTrends} isDark={isDarkMode} />
             ) : (
               <div className="h-56 sm:h-72 flex items-center justify-center text-xs text-slate-400 italic">
-                Data grafik tren sedang disiapkan...
+                {language === "id" ? "Data grafik tren sedang disiapkan..." : "Trend chart data is being prepared..."}
               </div>
             )}
           </div>
@@ -675,10 +685,10 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                  Pagu Anggaran (Budget)
+                  {language === "id" ? "Pagu Anggaran (Budget)" : "Monthly Budget Caps"}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                  Target vs realisasi bulan {currentMonthName}
+                  {language === "id" ? `Target vs realisasi bulan ${currentMonthName}` : `Target vs actual spending for ${currentMonthName}`}
                 </p>
               </div>
             </div>
@@ -693,10 +703,10 @@ export default function DashboardPage() {
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <Layers className="w-4 h-4 text-violet-500" />
-                  <span>Riwayat Transaksi Terakhir</span>
+                  <span>{t.dashboard.recentTransactions}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                  Catatan transaksi real-time tervalidasi dengan filter interaktif
+                  {language === "id" ? "Catatan transaksi real-time tervalidasi dengan filter interaktif" : "Real-time validated transaction ledger with interactive filters"}
                 </p>
               </div>
             </div>
@@ -722,7 +732,7 @@ export default function DashboardPage() {
 
             {transactions.length === 0 ? (
               <div className="p-8 sm:p-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
-                <p>Tidak ada transaksi yang cocok dengan kriteria filter.</p>
+                <p>{language === "id" ? "Tidak ada transaksi yang cocok dengan kriteria filter." : "No transactions match the selected filter criteria."}</p>
                 <button
                   onClick={() =>
                     setFilters({
@@ -736,7 +746,7 @@ export default function DashboardPage() {
                   }
                   className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition shadow-sm inline-block"
                 >
-                  Bersihkan Filter
+                  {language === "id" ? "Bersihkan Filter" : "Clear Filters"}
                 </button>
               </div>
             ) : (
@@ -745,7 +755,7 @@ export default function DashboardPage() {
                 <div className="sm:hidden space-y-2">
                   {transactions.map((tx) => {
                     const isExp = tx.type === "EXPENSE";
-                    const formattedDate = new Date(tx.date).toLocaleDateString("id-ID", {
+                    const formattedDate = new Date(tx.date).toLocaleDateString(language === "id" ? "id-ID" : "en-US", {
                       day: "numeric",
                       month: "short",
                     });
@@ -758,13 +768,13 @@ export default function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="font-bold text-slate-800 dark:text-slate-100 text-xs truncate">
-                              {tx.merchantName || (isExp ? "Pengeluaran" : "Pemasukan")}
+                              {tx.merchantName || (isExp ? t.dashboard.expenseLegend : t.dashboard.incomeLegend)}
                             </p>
                             {tx.receiptImageUrl && (
                               <button
                                 onClick={() => setSelectedReceiptImage(tx.receiptImageUrl)}
                                 className="text-cyan-500 hover:text-cyan-400 p-0.5 rounded"
-                                title="Lihat Struk"
+                                title={t.dashboard.viewReceipt}
                               >
                                 <Receipt className="w-3.5 h-3.5" />
                               </button>
@@ -809,17 +819,17 @@ export default function DashboardPage() {
                   <table className="w-full text-left text-xs min-w-[500px]">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold text-[10px]">
-                        <th className="pb-3.5 pl-3">Tanggal & Toko</th>
-                        <th className="pb-3.5">Kategori</th>
-                        <th className="pb-3.5">Dompet</th>
-                        <th className="pb-3.5">Struk AI</th>
-                        <th className="pb-3.5 text-right pr-3">Nominal</th>
+                        <th className="pb-3.5 pl-3">{language === "id" ? "Tanggal & Toko" : "Date & Merchant"}</th>
+                        <th className="pb-3.5">{language === "id" ? "Kategori" : "Category"}</th>
+                        <th className="pb-3.5">{language === "id" ? "Dompet" : "Wallet"}</th>
+                        <th className="pb-3.5">{language === "id" ? "Struk AI" : "AI Receipt"}</th>
+                        <th className="pb-3.5 text-right pr-3">{language === "id" ? "Nominal" : "Amount"}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-medium">
                       {transactions.map((tx) => {
                         const isExp = tx.type === "EXPENSE";
-                        const formattedDate = new Date(tx.date).toLocaleDateString("id-ID", {
+                        const formattedDate = new Date(tx.date).toLocaleDateString(language === "id" ? "id-ID" : "en-US", {
                           day: "numeric",
                           month: "short",
                         });
@@ -831,7 +841,7 @@ export default function DashboardPage() {
                           >
                             <td className="py-3.5 pl-3 pr-2">
                               <p className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                                {tx.merchantName || (isExp ? "Pengeluaran" : "Pemasukan")}
+                                {tx.merchantName || (isExp ? t.dashboard.expenseLegend : t.dashboard.incomeLegend)}
                               </p>
                               <p className="text-[10px] text-slate-400 dark:text-slate-500">
                                 {formattedDate} {tx.notes ? `• ${tx.notes}` : ""}
@@ -860,7 +870,7 @@ export default function DashboardPage() {
                                   className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500/20 px-2.5 py-1 rounded-xl border border-cyan-500/25 transition shadow-sm"
                                 >
                                   <Receipt className="w-3.5 h-3.5" />
-                                  <span>Lihat</span>
+                                  <span>{language === "id" ? "Lihat" : "View"}</span>
                                 </button>
                               ) : (
                                 <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
@@ -890,11 +900,11 @@ export default function DashboardPage() {
           {/* Footer Copyright Notice */}
           <footer className="pt-8 pb-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-200/60 dark:border-white/5">
             <p className="font-medium">
-              &copy; 2026 <span className="font-semibold text-slate-700 dark:text-slate-300">FinTrack AI</span>. Hak Cipta Dilindungi Undang-Undang.
+              {t.footer.copyright}
             </p>
             <p className="text-[11px] text-slate-400 dark:text-slate-500">
-              Didesain dan Dikembangkan oleh{" "}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Dandy Rahmat Zain</span>
+              {t.footer.createdByPrefix}{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t.footer.authorName}</span>
             </p>
           </footer>
         </div>
@@ -938,7 +948,7 @@ export default function DashboardPage() {
           >
             <img
               src={selectedReceiptImage}
-              alt="Lampiran Struk"
+              alt={t.dashboard.receiptAttachment}
               className="max-h-[72vh] sm:max-h-[75vh] w-auto max-w-full mx-auto rounded-2xl object-contain shadow-sm border border-slate-100 dark:border-white/5"
             />
             <div className="mt-4 text-center">
@@ -946,7 +956,7 @@ export default function DashboardPage() {
                 onClick={() => setSelectedReceiptImage(null)}
                 className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-xl shadow-lg transition"
               >
-                Tutup Gambar
+                {t.dashboard.closeImage}
               </button>
             </div>
           </div>

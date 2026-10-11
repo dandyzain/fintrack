@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Loader2,
 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface WalletItem {
   id: string;
@@ -33,6 +34,7 @@ export function WalletManagementModal({
   wallets,
   onWalletUpdated,
 }: WalletManagementModalProps) {
+  const { t, language } = useLanguage();
   const [name, setName] = useState("");
   const [balance, setBalance] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export function WalletManagementModal({
   const handleCreateWallet = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setErrorMsg("Nama kantong wajib diisi.");
+      setErrorMsg(t.modals.pocketNameRequired);
       return;
     }
 
@@ -67,10 +69,14 @@ export function WalletManagementModal({
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal membuat kantong baru.");
+        throw new Error(json.error || "Failed to create pocket.");
       }
 
-      setSuccessMsg(`Kantong "${name.trim()}" berhasil dibuat!`);
+      setSuccessMsg(
+        language === "id"
+          ? `Kantong "${name.trim()}" berhasil dibuat!`
+          : `Pocket "${name.trim()}" created successfully!`
+      );
       setName("");
       setBalance("");
       onWalletUpdated();
@@ -83,13 +89,15 @@ export function WalletManagementModal({
 
   const handleDeleteWallet = async (wallet: WalletItem) => {
     if (wallets.length <= 1) {
-      setErrorMsg("Tidak dapat menghapus kantong terakhir. Minimal harus ada satu kantong.");
+      setErrorMsg(t.modals.cantDeleteLastWallet);
       return;
     }
 
-    const confirmDelete = window.confirm(
-      `Apakah Anda yakin ingin menghapus kantong "${wallet.name}"? Semua transaksi yang terkait akan ikut terhapus.`
-    );
+    const confirmMsg =
+      language === "id"
+        ? `Apakah Anda yakin ingin menghapus kantong "${wallet.name}"? Semua transaksi yang terkait akan ikut terhapus.`
+        : `Are you sure you want to delete pocket "${wallet.name}"? All related transactions will be removed.`;
+    const confirmDelete = window.confirm(confirmMsg);
     if (!confirmDelete) return;
 
     setDeletingId(wallet.id);
@@ -103,10 +111,14 @@ export function WalletManagementModal({
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal menghapus kantong.");
+        throw new Error(json.error || "Failed to delete pocket.");
       }
 
-      setSuccessMsg(`Kantong "${wallet.name}" berhasil dihapus.`);
+      setSuccessMsg(
+        language === "id"
+          ? `Kantong "${wallet.name}" berhasil dihapus.`
+          : `Pocket "${wallet.name}" deleted successfully.`
+      );
       onWalletUpdated();
     } catch (err) {
       setErrorMsg((err as Error).message);
@@ -127,20 +139,20 @@ export function WalletManagementModal({
             <div>
               <div className="flex items-center gap-1.5">
                 <h3 className="font-black text-slate-900 dark:text-white text-base tracking-tight">
-                  Kelola Kantong (Dompet)
+                  {t.modals.walletModalTitle}
                 </h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20 flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Virtual Deck
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
-                Tambah kantong baru atau kelola alokasi saldo dompet
+                {t.modals.walletModalSubtitle}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            aria-label="Tutup modal"
+            aria-label={t.common.close}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
@@ -171,18 +183,18 @@ export function WalletManagementModal({
             <div className="flex items-center justify-between mb-1">
               <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Plus className="w-3.5 h-3.5 text-violet-500" />
-                <span>Tambah Kantong Baru</span>
+                <span>{t.modals.newWalletTitle}</span>
               </h4>
-              <span className="text-[10px] text-slate-400 font-medium">Bebas Biaya</span>
+              <span className="text-[10px] text-slate-400 font-medium">{t.common.freeOfCharge}</span>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Nama Kantong *
+                {t.modals.pocketNameLabel}
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Tabungan Liburan, Dana Darurat, GoPay"
+                placeholder={t.modals.pocketNamePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -192,7 +204,7 @@ export function WalletManagementModal({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Saldo Awal (Rp)
+                {t.modals.initialBalanceLabel}
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400 pointer-events-none">
@@ -216,12 +228,12 @@ export function WalletManagementModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Memproses Kantong...</span>
+                  <span>{t.modals.processingPocket}</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  <span>Buat Kantong Baru</span>
+                  <span>{t.modals.createPocketBtn}</span>
                 </>
               )}
             </button>
@@ -231,9 +243,11 @@ export function WalletManagementModal({
           <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Daftar Kantong Anda ({wallets.length})
+                {language === "id" ? `Daftar Kantong Anda (${wallets.length})` : `Your Pockets List (${wallets.length})`}
               </h4>
-              <span className="text-[10px] text-slate-400">Klik sampah untuk menghapus</span>
+              <span className="text-[10px] text-slate-400">
+                {language === "id" ? "Klik sampah untuk menghapus" : "Click trash to delete"}
+              </span>
             </div>
 
             <div className="space-y-2">
@@ -261,8 +275,10 @@ export function WalletManagementModal({
                     disabled={deletingId === w.id || wallets.length <= 1}
                     title={
                       wallets.length <= 1
-                        ? "Tidak dapat menghapus kantong terakhir"
-                        : "Hapus kantong ini"
+                        ? t.modals.cantDeleteLastWallet
+                        : language === "id"
+                        ? "Hapus kantong ini"
+                        : "Delete this pocket"
                     }
                     className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 transition disabled:opacity-30 disabled:hover:bg-transparent flex-shrink-0"
                   >
@@ -282,14 +298,14 @@ export function WalletManagementModal({
         <div className="p-4 sm:p-5 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-[#121826]/80 backdrop-blur-md">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Tersinkronisasi otomatis</span>
+            <span>{language === "id" ? "Tersinkronisasi otomatis" : "Automatically synchronized"}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-sm"
           >
-            Selesai
+            {t.common.close}
           </button>
         </div>
       </div>

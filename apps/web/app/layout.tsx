@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/context/language-context";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -10,7 +11,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "FinTrack AI - Personal Finance & OCR Receipt Scanner",
   description:
-    "Aplikasi Personal Finance & Expense Tracker cerdas dengan pemindaian struk belanja otomatis menggunakan Vision AI.",
+    "Smart Personal Finance & Expense Tracker with automatic receipt OCR scanning powered by Vision AI.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -37,13 +38,20 @@ export default function RootLayout({
                 } else {
                   document.documentElement.classList.remove('dark');
                 }
+
+                var lang = localStorage.getItem('fintrack-lang');
+                if (lang === 'id' || lang === 'en') {
+                  document.documentElement.lang = lang;
+                } else {
+                  document.documentElement.lang = 'en';
+                }
               } catch (e) {}
             `,
           }}
         />
       </head>
       <body className="bg-[#F8FAFC] text-slate-900 dark:bg-[#090D16] dark:text-slate-100 antialiased min-h-screen">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

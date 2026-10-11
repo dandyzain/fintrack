@@ -17,12 +17,14 @@ import {
   Zap,
 } from "lucide-react";
 import type { DashboardAnalyticsResponse } from "@fintrack/shared";
+import { useLanguage } from "@/context/language-context";
 
 interface AnalyticsStatsHubProps {
   analytics: DashboardAnalyticsResponse | null;
 }
 
 export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
+  const { t, language } = useLanguage();
   if (!analytics) return null;
 
   const { summary, metrics, categoryBreakdown, financialHealth } = analytics;
@@ -64,14 +66,14 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
               <span className="p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
                 <BarChart3 className="w-3.5 h-3.5" />
               </span>
-              <span>Statistik & Wawasan Finansial</span>
+              <span>{t.analytics.statsTitle}</span>
             </h2>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-cyan-500/10 text-violet-600 dark:text-violet-300 font-semibold border border-violet-500/20 flex items-center gap-1 shadow-sm">
               <Zap className="w-2.5 h-2.5 text-cyan-400" /> Bento Intelligence
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
-            Analisis pola konsumsi, rata-rata harian, dan metrik kesehatan kas
+            {t.analytics.statsSubtitle}
           </p>
         </div>
 
@@ -86,7 +88,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           )}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-900 dark:text-white">Skor {healthScore}/100</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-white">{t.analytics.score} {healthScore}/100</span>
             <span className="text-xs font-semibold opacity-90">• {healthLabel}</span>
           </div>
         </div>
@@ -98,17 +100,17 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
         <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-cyan-500/40 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-cyan-500" /> Rerata / Hari
+              <CalendarDays className="w-3.5 h-3.5 text-cyan-500" /> {t.analytics.dailyAvgShort}
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/20">
-              HARIAN
+              {t.analytics.dailyBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             Rp {dailyAverage.toLocaleString("id-ID")}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
-            Proyeksi akhir bln: Rp {(metrics?.projectedMonthEndExpense || dailyAverage * 30).toLocaleString("id-ID")}
+            {t.analytics.projectedMonthEnd} Rp {(metrics?.projectedMonthEndExpense || dailyAverage * 30).toLocaleString("id-ID")}
           </p>
         </div>
 
@@ -116,17 +118,17 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
         <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-violet-500/40 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-violet-500" /> Rerata / Belanja
+              <Coins className="w-3.5 h-3.5 text-violet-500" /> {t.analytics.perTxShort}
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
-              PER TX
+              {t.analytics.perTxBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             Rp {avgPerTx.toLocaleString("id-ID")}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
-            Dari {summary?.expenseCount || 0} kali transaksi keluar
+            {t.analytics.fromTxCount.replace("{count}", String(summary?.expenseCount || 0))}
           </p>
         </div>
 
@@ -134,17 +136,17 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
         <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-rose-500/40 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingDown className="w-3.5 h-3.5 text-rose-500" /> Terbesar Bulan Ini
+              <TrendingDown className="w-3.5 h-3.5 text-rose-500" /> {t.analytics.largestMonth}
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
-              PUNCAK
+              {t.analytics.peakBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             {largestTx ? `Rp ${Number(largestTx.amount).toLocaleString("id-ID")}` : "-"}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate font-medium">
-            {largestTx ? largestTx.merchantName || "Transaksi Manual" : "Belum ada pengeluaran"}
+            {largestTx ? largestTx.merchantName || t.analytics.manualTxLabel : t.analytics.noExpenseYet}
           </p>
         </div>
 
@@ -152,17 +154,17 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
         <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-emerald-500/40 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Receipt className="w-3.5 h-3.5 text-emerald-500" /> Struk Vision AI
+              <Receipt className="w-3.5 h-3.5 text-emerald-500" /> {t.analytics.receiptScans}
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
               VISION
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
-            {receiptCount} Struk
+            {t.analytics.receiptsCount.replace("{count}", String(receiptCount))}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
-            Total: Rp {receiptTotal.toLocaleString("id-ID")}
+            {t.analytics.totalLabel} Rp {receiptTotal.toLocaleString("id-ID")}
           </p>
         </div>
       </div>
@@ -174,10 +176,10 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-violet-500" /> Rasio Kesehatan Kas
+                <Award className="w-3.5 h-3.5 text-violet-500" /> {t.analytics.cashHealthRatio}
               </span>
               <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
-                {metrics?.savingsRatio ?? 0}% Tabungan
+                {metrics?.savingsRatio ?? 0}% {t.analytics.savingsLabel}
               </span>
             </div>
 
@@ -196,15 +198,15 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
 
           <div className="grid grid-cols-2 gap-2 text-xs pt-2.5 border-t border-slate-100 dark:border-white/5">
             <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Rasio Belanja/Masuk</span>
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">{t.analytics.spendIncomeRatio}</span>
               <span className="font-bold text-slate-900 dark:text-white">
                 {metrics?.expenseToIncomeRatio ?? 0}%
               </span>
             </div>
             <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Total Mutasi</span>
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">{t.analytics.totalMutations}</span>
               <span className="font-bold text-slate-900 dark:text-white">
-                {metrics?.totalTransactions ?? ((summary?.expenseCount || 0) + (summary?.incomeCount || 0))} transaksi
+                {metrics?.totalTransactions ?? ((summary?.expenseCount || 0) + (summary?.incomeCount || 0))} {t.analytics.mutationsCount}
               </span>
             </div>
           </div>
@@ -216,20 +218,20 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <PieChart className="w-3.5 h-3.5 text-cyan-500" />
-                Distribusi Pengeluaran per Kategori
+                {t.analytics.catDistribution}
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
-                Porsi pembagian biaya belanja bulan ini
+                {t.analytics.catDistributionDesc}
               </p>
             </div>
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {categoryBreakdown?.length || 0} Kategori Aktif
+              {t.analytics.activeCategories.replace("{count}", String(categoryBreakdown?.length || 0))}
             </span>
           </div>
 
           {(!categoryBreakdown || categoryBreakdown.length === 0) ? (
             <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-              Belum ada data pengeluaran berkategori bulan ini.
+              {t.analytics.noCategoryData}
             </div>
           ) : (
             <div className="space-y-3">

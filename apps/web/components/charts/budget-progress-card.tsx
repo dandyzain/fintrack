@@ -3,16 +3,19 @@
 import React from "react";
 import type { CategoryBudgetComparison } from "@fintrack/shared";
 import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface BudgetProgressCardProps {
   comparisons: CategoryBudgetComparison[];
 }
 
 export function BudgetProgressCard({ comparisons }: BudgetProgressCardProps) {
+  const { t } = useLanguage();
+
   if (!comparisons || comparisons.length === 0) {
     return (
       <div className="text-xs text-slate-400 dark:text-slate-500 py-8 text-center italic bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-200 dark:border-white/10">
-        Belum ada pagu anggaran atau pengeluaran tercatat untuk bulan ini.
+        {t.analytics.noBudgetsRecorded}
       </div>
     );
   }
@@ -44,15 +47,15 @@ export function BudgetProgressCard({ comparisons }: BudgetProgressCardProps) {
               <div>
                 {isOver ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-                    <AlertTriangle className="w-2.5 h-2.5" /> Pagu Terlampaui
+                    <AlertTriangle className="w-2.5 h-2.5" /> {t.analytics.budgetExceeded}
                   </span>
                 ) : isHigh ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                    <AlertCircle className="w-2.5 h-2.5" /> Waspada
+                    <AlertCircle className="w-2.5 h-2.5" /> {t.analytics.budgetWarning}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <CheckCircle2 className="w-2.5 h-2.5" /> Aman
+                    <CheckCircle2 className="w-2.5 h-2.5" /> {t.analytics.budgetSafe}
                   </span>
                 )}
               </div>
@@ -82,7 +85,7 @@ export function BudgetProgressCard({ comparisons }: BudgetProgressCardProps) {
               <span className="text-[11px] font-bold ml-auto text-slate-700 dark:text-slate-300">
                 {isOver
                   ? `+Rp ${(item.actualExpense - item.limitAmount).toLocaleString("id-ID")}`
-                  : `Sisa Rp ${item.remainingBudget.toLocaleString("id-ID")}`}
+                  : `${t.analytics.remainingBudget} Rp ${item.remainingBudget.toLocaleString("id-ID")}`}
               </span>
             </div>
           </div>
