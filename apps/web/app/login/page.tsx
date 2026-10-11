@@ -238,15 +238,13 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Copyright Notice */}
-        <footer className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500 space-y-1.5">
+        <footer className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
           <p className="font-medium">
-            © 2026 <span className="font-bold text-slate-700 dark:text-slate-300">FinTrack AI</span>. All rights reserved.
+            &copy; 2026 <span className="font-semibold text-slate-700 dark:text-slate-300">FinTrack AI</span>. Hak Cipta Dilindungi Undang-Undang.
           </p>
-          <p className="flex items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <span>Crafted with</span>
-            <span className="text-rose-500 inline-block animate-pulse">❤️</span>
-            <span>by</span>
-            <span className="font-bold text-slate-700 dark:text-slate-200">Dandy Rahmat Zain</span>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Didesain dan Dikembangkan oleh{" "}
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Dandy Rahmat Zain</span>
           </p>
         </footer>
       </div>

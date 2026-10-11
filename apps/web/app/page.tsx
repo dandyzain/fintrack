@@ -886,6 +886,17 @@ export default function DashboardPage() {
               </>
             )}
           </div>
+
+          {/* Footer Copyright Notice */}
+          <footer className="pt-8 pb-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-200/60 dark:border-white/5">
+            <p className="font-medium">
+              &copy; 2026 <span className="font-semibold text-slate-700 dark:text-slate-300">FinTrack AI</span>. Hak Cipta Dilindungi Undang-Undang.
+            </p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              Didesain dan Dikembangkan oleh{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Dandy Rahmat Zain</span>
+            </p>
+          </footer>
         </div>
       </main>
 
