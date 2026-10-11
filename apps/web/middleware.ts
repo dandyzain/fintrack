@@ -14,8 +14,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Public auth pages
+  // 2. Public auth and demo pages
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isDemoPage = pathname === "/demo";
 
   // If user has a valid session token and visits login or register -> redirect to dashboard
   if (hasValidTokenFormat && isAuthPage) {
@@ -23,7 +24,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If user does NOT have a valid session token and visits protected page (e.g. root '/')
-  if (!hasValidTokenFormat && !isAuthPage) {
+  if (!hasValidTokenFormat && !isAuthPage && !isDemoPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

@@ -304,6 +304,19 @@ export default function RegisterPage() {
             </Link>
           </div>
         </div>
+
+        {/* Footer Copyright Notice */}
+        <footer className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500 space-y-1.5">
+          <p className="font-medium">
+            © 2026 <span className="font-bold text-slate-700 dark:text-slate-300">FinTrack AI</span>. All rights reserved.
+          </p>
+          <p className="flex items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span>Crafted with</span>
+            <span className="text-rose-500 inline-block animate-pulse">❤️</span>
+            <span>by</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200">Dandy Rahmat Zain</span>
+          </p>
+        </footer>
       </div>
     </div>
   );

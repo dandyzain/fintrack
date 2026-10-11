@@ -75,36 +75,6 @@ export default function LoginPage() {
     }
   };
 
-  // Instant 1-Click Demo Login
-  const handleDemoLogin = async () => {
-    setEmail("dandy@example.com");
-    setPassword("password123");
-    setIsLoading(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: "dandy@example.com",
-          password: "password123",
-        }),
-      });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Gagal masuk akun demo.");
-      }
-
-      window.location.href = "/";
-    } catch (err) {
-      setErrorMsg((err as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC] dark:bg-[#090D16] text-slate-800 dark:text-slate-100 transition-colors duration-200 overflow-hidden">
       {/* Background Decorative Ambient Neon Glows */}
@@ -235,26 +205,25 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-5 text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200 dark:border-white/10" />
+          {/* Demo Mode Link Callout */}
+          <div className="mt-5 p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-dashed border-slate-200 dark:border-white/10 flex items-center justify-between gap-3 transition hover:border-violet-500/40">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Mode Uji Coba (Demo)</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">Coba fitur tanpa mendaftar akun</p>
+              </div>
             </div>
-            <span className="relative px-3 bg-white dark:bg-[#121826] text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-              atau coba akun demo
-            </span>
+            <Link
+              href="/demo"
+              className="px-3 py-1.5 text-xs font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition flex items-center gap-1 whitespace-nowrap"
+            >
+              <span>Buka Demo</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-
-          {/* 1-Click Instant Demo Login */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-slate-50/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2 hover:border-violet-500/40"
-          >
-            <Zap className="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" />
-            <span>Masuk Instan (Akun Demo: Dandy Zain)</span>
-          </button>
 
           {/* Register Link */}
           <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
@@ -267,6 +236,19 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
+
+        {/* Footer Copyright Notice */}
+        <footer className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500 space-y-1.5">
+          <p className="font-medium">
+            © 2026 <span className="font-bold text-slate-700 dark:text-slate-300">FinTrack AI</span>. All rights reserved.
+          </p>
+          <p className="flex items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span>Crafted with</span>
+            <span className="text-rose-500 inline-block animate-pulse">❤️</span>
+            <span>by</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200">Dandy Rahmat Zain</span>
+          </p>
+        </footer>
       </div>
     </div>
   );
