@@ -146,13 +146,15 @@ export default function DashboardPage() {
       // 1. Verify Authentication
       const meRes = await fetch("/api/auth/me");
       if (meRes.status === 401) {
-        router.push("/login");
+        window.location.replace("/login");
         return;
       }
       const meJson = await meRes.json();
-      if (meJson.success && meJson.data?.user) {
-        setCurrentUser(meJson.data.user);
+      if (!meJson.success || !meJson.data?.user) {
+        window.location.replace("/login");
+        return;
       }
+      setCurrentUser(meJson.data.user);
 
       const [analyticsRes, walletsRes, categoriesRes] = await Promise.all([
         fetch("/api/analytics"),
@@ -216,6 +218,27 @@ export default function DashboardPage() {
     "virtual-card-emerald",
     "virtual-card-indigo",
   ];
+
+  if (isLoading || !currentUser) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16] text-slate-900 dark:text-white relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-40 left-1/4 w-96 h-96 bg-violet-600/10 dark:bg-violet-600/15 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute top-40 right-10 w-96 h-96 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-full blur-3xl" />
+        <div className="relative mb-4">
+          <div className="absolute -inset-2 bg-gradient-to-r from-violet-600 to-cyan-500 rounded-2xl blur opacity-60 animate-pulse" />
+          <img
+            src="/logo.png"
+            alt="FinTrack Logo"
+            className="relative w-12 h-12 rounded-2xl object-cover border border-white/20 shadow-md"
+          />
+        </div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin text-violet-500" />
+          <span>Memverifikasi sesi & memuat FinTrack...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen text-slate-900 dark:text-slate-100 bg-[#F8FAFC] dark:bg-[#090D16] relative overflow-hidden transition-colors duration-200">
