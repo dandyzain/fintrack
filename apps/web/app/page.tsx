@@ -35,7 +35,12 @@ import { ManualTransactionModal } from "@/components/modals/manual-transaction-m
 import { WalletManagementModal } from "@/components/modals/wallet-management-modal";
 import { useLanguage } from "@/context/language-context";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
-import { localizeCategoryName, localizeWalletName, localizeTransactionNote } from "@/lib/i18n/translations";
+import {
+  localizeCategoryName,
+  localizeWalletName,
+  localizeTransactionNote,
+  getLocalizedHealthAdvisory,
+} from "@/lib/i18n/translations";
 import type { DashboardAnalyticsResponse, AuthUser } from "@fintrack/shared";
 
 interface WalletItem {
@@ -215,6 +220,49 @@ export default function DashboardPage() {
           )
         )
       : 0;
+
+  const healthScore = analytics?.financialHealth?.score ?? 88;
+  const healthAdvisory = getLocalizedHealthAdvisory(
+    healthScore,
+    analytics?.metrics?.savingsRatio ?? savingsRate,
+    analytics?.metrics?.expenseToIncomeRatio ?? 0,
+    language
+  );
+
+  const getHealthTone = (score: number) => {
+    if (score >= 90) {
+      return {
+        badge: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+        badgeText: language === "id" ? "PRIMA" : "OPTIMAL",
+        icon: "text-emerald-500",
+        gradient: ["#10B981", "#06B6D4", "#6366F1"],
+      };
+    }
+    if (score >= 75) {
+      return {
+        badge: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
+        badgeText: language === "id" ? "STABIL" : "HEALTHY",
+        icon: "text-cyan-500",
+        gradient: ["#06B6D4", "#6366F1"],
+      };
+    }
+    if (score >= 50) {
+      return {
+        badge: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        badgeText: language === "id" ? "WASPADA" : "WARNING",
+        icon: "text-amber-500",
+        gradient: ["#F59E0B", "#F43F5E"],
+      };
+    }
+    return {
+      badge: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+      badgeText: language === "id" ? "DEFISIT" : "CRITICAL",
+      icon: "text-rose-500",
+      gradient: ["#F43F5E", "#E11D48"],
+    };
+  };
+
+  const healthTone = getHealthTone(healthScore);
 
   // Preset Card Gradients for Wallets
   const cardGradientStyles = [
@@ -473,20 +521,21 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Bento Card 2: Financial Health Circular Gauge (1 Col on lg) */}
+          {/* Bento Card 2: Financial Health Circular Gauge (1 Col on lg, horizontal on tablet) */}
           <div className="bento-card p-4 sm:p-6 rounded-2xl flex flex-col justify-between border border-slate-200/90 dark:border-white/10">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" /> Health Meter
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+                <ShieldCheck className={`w-4 h-4 flex-shrink-0 ${healthTone.icon}`} />
+                <span className="truncate">{language === "id" ? "Skor Kesehatan" : "Health Meter"}</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">
-                OPTIMAL
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border whitespace-nowrap flex-shrink-0 ${healthTone.badge}`}>
+                {healthTone.badgeText}
               </span>
             </div>
 
             {/* Circular Gauge Display */}
-            <div className="py-2 flex flex-col items-center justify-center">
-              <div className="relative w-32 h-32 flex items-center justify-center">
+            <div className="py-2 flex flex-col sm:flex-row lg:flex-col items-center justify-center sm:justify-start lg:justify-center gap-2 sm:gap-6 lg:gap-0">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle
                     cx="50"
@@ -504,35 +553,41 @@ export default function DashboardPage() {
                     stroke="url(#creativeGaugeGradient)"
                     strokeWidth="9"
                     strokeDasharray="251.2"
-                    strokeDashoffset={251.2 * (1 - (analytics?.financialHealth?.score ?? 88) / 100)}
+                    strokeDashoffset={251.2 * (1 - healthScore / 100)}
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
                   />
                   <defs>
                     <linearGradient id="creativeGaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#10B981" />
-                      <stop offset="50%" stopColor="#06B6D4" />
-                      <stop offset="100%" stopColor="#6366F1" />
+                      {healthTone.gradient.map((color, i) => (
+                        <stop key={color + i} offset={`${i * 50}%`} stopColor={color} />
+                      ))}
                     </linearGradient>
                   </defs>
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center">
                   <span className="text-2xl font-black text-slate-900 dark:text-white">
-                    {analytics?.financialHealth?.score ?? 88}
+                    {healthScore}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {language === "id" ? "DARI 100" : "OUT OF 100"}
                   </span>
                 </div>
               </div>
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-2 text-center">
-                {language === "id" ? "Kondisi Finansial Prima" : "Optimal Financial Health"}
-              </p>
+              <div className="text-center sm:text-left lg:text-center min-w-0 sm:flex-1 lg:flex-none">
+                <p className="text-xs sm:text-sm lg:text-xs font-bold text-slate-800 dark:text-slate-200 lg:mt-2">
+                  {healthAdvisory.label}
+                </p>
+                {/* Advice only on tablet, where the card has spare horizontal room */}
+                <p className="hidden sm:block lg:hidden text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  {healthAdvisory.message}
+                </p>
+              </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2 text-xs">
               <span className="text-slate-500 dark:text-slate-400">{t.dashboard.savingsRate}</span>
-              <span className="font-bold text-violet-600 dark:text-violet-400">
+              <span className="font-bold text-violet-600 dark:text-violet-400 whitespace-nowrap">
                 {savingsRate}% {language === "id" ? "Bulan ini" : "This month"}
               </span>
             </div>
@@ -564,7 +619,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Cards Deck Carousel / Grid */}
-          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             {wallets.map((w, index) => {
               const cardClass = cardGradientStyles[index % cardGradientStyles.length];
               const isFirst = index === 0;
