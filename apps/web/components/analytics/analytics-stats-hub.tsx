@@ -68,14 +68,14 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
       {/* 1. Header Bar: Section Title & Health Score Pill */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               <span className="p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
                 <BarChart3 className="w-3.5 h-3.5" />
               </span>
               <span>{t.analytics.statsTitle}</span>
             </h2>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-cyan-500/10 text-violet-600 dark:text-violet-300 font-semibold border border-violet-500/20 flex items-center gap-1 shadow-sm">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-cyan-500/10 text-violet-600 dark:text-violet-300 font-semibold border border-violet-500/20 flex items-center gap-1 shadow-sm whitespace-nowrap">
               <Zap className="w-2.5 h-2.5 text-cyan-400" /> Bento Intelligence
             </span>
           </div>
@@ -102,75 +102,75 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
       </div>
 
       {/* 2. 4 Creative Modern Bento Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Metric 1: Rata-rata Pengeluaran Harian */}
-        <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-cyan-500/40 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bento-card p-3 sm:p-4 rounded-xl min-w-0 border border-slate-200/90 dark:border-white/10 hover:border-cyan-500/40 transition">
+          <div className="flex items-start justify-between gap-1.5 mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 min-w-0 leading-tight">
               <CalendarDays className="w-3.5 h-3.5 text-cyan-500" /> {t.analytics.dailyAvgShort}
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/20">
+            <span className="hidden sm:inline-block flex-shrink-0 whitespace-nowrap text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/20">
               {t.analytics.dailyBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             Rp {dailyAverage.toLocaleString("id-ID")}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2 break-words">
             {t.analytics.projectedMonthEnd} Rp {(metrics?.projectedMonthEndExpense || dailyAverage * 30).toLocaleString("id-ID")}
           </p>
         </div>
 
         {/* Metric 2: Rata-rata per Transaksi */}
-        <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-violet-500/40 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bento-card p-3 sm:p-4 rounded-xl min-w-0 border border-slate-200/90 dark:border-white/10 hover:border-violet-500/40 transition">
+          <div className="flex items-start justify-between gap-1.5 mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 min-w-0 leading-tight">
               <Coins className="w-3.5 h-3.5 text-violet-500" /> {t.analytics.perTxShort}
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
+            <span className="hidden sm:inline-block flex-shrink-0 whitespace-nowrap text-[9px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
               {t.analytics.perTxBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             Rp {avgPerTx.toLocaleString("id-ID")}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2 break-words">
             {t.analytics.fromTxCount.replace("{count}", String(summary?.expenseCount || 0))}
           </p>
         </div>
 
         {/* Metric 3: Pengeluaran Terbesar Bulan Ini */}
-        <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-rose-500/40 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bento-card p-3 sm:p-4 rounded-xl min-w-0 border border-slate-200/90 dark:border-white/10 hover:border-rose-500/40 transition">
+          <div className="flex items-start justify-between gap-1.5 mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 min-w-0 leading-tight">
               <TrendingDown className="w-3.5 h-3.5 text-rose-500" /> {t.analytics.largestMonth}
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
+            <span className="hidden sm:inline-block flex-shrink-0 whitespace-nowrap text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
               {t.analytics.peakBadge}
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             {largestTx ? `Rp ${Number(largestTx.amount).toLocaleString("id-ID")}` : "-"}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate font-medium">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2 break-words font-medium">
             {largestTx ? (localizeCategoryName(largestTx.merchantName, language) || largestTx.merchantName || t.analytics.manualTxLabel) : t.analytics.noExpenseYet}
           </p>
         </div>
 
         {/* Metric 4: Struk AI Terverifikasi */}
-        <div className="bento-card p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-emerald-500/40 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bento-card p-3 sm:p-4 rounded-xl min-w-0 border border-slate-200/90 dark:border-white/10 hover:border-emerald-500/40 transition">
+          <div className="flex items-start justify-between gap-1.5 mb-2">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 min-w-0 leading-tight">
               <Receipt className="w-3.5 h-3.5 text-emerald-500" /> {t.analytics.receiptScans}
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+            <span className="hidden sm:inline-block flex-shrink-0 whitespace-nowrap text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
               VISION
             </span>
           </div>
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
             {t.analytics.receiptsCount.replace("{count}", String(receiptCount))}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2 break-words">
             {t.analytics.totalLabel} Rp {receiptTotal.toLocaleString("id-ID")}
           </p>
         </div>
@@ -181,7 +181,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
         {/* Advisory & Health Bar (1 Col) */}
         <div className="bento-card p-4 sm:p-5 rounded-xl border border-slate-200/90 dark:border-white/10 flex flex-col justify-between space-y-3">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-start justify-between gap-1.5 mb-2">
               <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Award className="w-3.5 h-3.5 text-violet-500" /> {t.analytics.cashHealthRatio}
               </span>
@@ -221,8 +221,8 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
 
         {/* Category Spending Breakdown (2 Cols) */}
         <div className="lg:col-span-2 bento-card p-4 sm:p-5 rounded-xl border border-slate-200/90 dark:border-white/10">
-          <div className="flex items-center justify-between mb-3">
-            <div>
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="min-w-0">
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <PieChart className="w-3.5 h-3.5 text-cyan-500" />
                 {t.analytics.catDistribution}
@@ -231,7 +231,7 @@ export function AnalyticsStatsHub({ analytics }: AnalyticsStatsHubProps) {
                 {t.analytics.catDistributionDesc}
               </p>
             </div>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="flex-shrink-0 whitespace-nowrap text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-white/10">
               {t.analytics.activeCategories.replace("{count}", String(categoryBreakdown?.length || 0))}
             </span>
           </div>

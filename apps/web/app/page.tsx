@@ -415,14 +415,14 @@ export default function DashboardPage() {
             ========================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           {/* Bento Card 1: Main Balance Hero (2 Cols on lg) */}
-          <div className="lg:col-span-2 bento-hero bento-card p-5 sm:p-7 rounded-2xl flex flex-col justify-between">
+          <div className="lg:col-span-2 bento-hero bento-card p-4 sm:p-7 rounded-2xl flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                  {t.dashboard.totalBalance}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)] flex-shrink-0" />
+                  <span className="truncate">{t.dashboard.totalBalance}</span>
                 </span>
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 flex items-center gap-1 shadow-sm">
+                <span className="text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 flex items-center gap-1 shadow-sm whitespace-nowrap flex-shrink-0">
                   <ArrowUpRight className="w-3 h-3" /> {t.dashboard.thisMonthGrowth}
                 </span>
               </div>
@@ -474,7 +474,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Bento Card 2: Financial Health Circular Gauge (1 Col on lg) */}
-          <div className="bento-card p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-slate-200/90 dark:border-white/10">
+          <div className="bento-card p-4 sm:p-6 rounded-2xl flex flex-col justify-between border border-slate-200/90 dark:border-white/10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" /> Health Meter
@@ -542,31 +542,29 @@ export default function DashboardPage() {
         {/* =========================================================
             BENTO VIRTUAL CARD DECK: DOMPET & KANTONG DIGITAL
             ========================================================= */}
-        <div className="bento-card p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
+        <div className="bento-card p-4 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-white/10">
+          <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center justify-between gap-3 mb-4">
+            <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-violet-500" />
+                <CreditCard className="w-4 h-4 text-violet-500 flex-shrink-0" />
                 <span>{language === "id" ? "Virtual Card Deck (Kantong Keuangan)" : "Virtual Card Deck (Financial Pockets)"}</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">
                 {language === "id" ? "Alokasi saldo kartu debit & rekening aktif" : "Balance allocation for debit cards & accounts"}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsWalletModalOpen(true)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-white glow-btn-violet px-3 py-1.5 rounded-xl transition shadow-sm"
-                title={t.dashboard.manageWallets}
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>{t.dashboard.manageWallets}</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setIsWalletModalOpen(true)}
+              className="self-start min-[480px]:self-auto flex-shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-white glow-btn-violet px-3.5 py-2 rounded-xl transition shadow-sm"
+              title={t.dashboard.manageWallets}
+            >
+              <PlusCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>{t.dashboard.manageWallets}</span>
+            </button>
           </div>
 
           {/* Cards Deck Carousel / Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {wallets.map((w, index) => {
               const cardClass = cardGradientStyles[index % cardGradientStyles.length];
               const isFirst = index === 0;
@@ -574,7 +572,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={w.id}
-                  className={`p-5 rounded-2xl text-white ${cardClass} flex flex-col justify-between h-44 relative group cursor-pointer shadow-lg`}
+                  className={`p-4 sm:p-5 rounded-2xl text-white ${cardClass} flex flex-col justify-between h-44 relative group cursor-pointer shadow-lg overflow-hidden`}
                   onClick={() => setIsWalletModalOpen(true)}
                 >
                   {/* Subtle Card Shimmer Watermark */}
@@ -602,16 +600,16 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Card Bottom: Masked Number & Wallet Name */}
-                  <div className="flex items-center justify-between z-10 pt-2 border-t border-white/10 text-xs">
-                    <div>
+                  <div className="flex items-center justify-between gap-2 z-10 pt-2 border-t border-white/10 text-xs">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[9px] text-slate-400 uppercase tracking-widest">
                         {t.dashboard.walletName}
                       </p>
-                      <p className="font-bold text-white text-xs truncate max-w-[130px]">
+                      <p className="font-bold text-white text-xs truncate">
                         {localizeWalletName(w.name, language)}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <p className="text-[11px] font-mono tracking-widest text-slate-300">
                         •••• {1000 + (index * 243) % 9000}
                       </p>
@@ -624,7 +622,7 @@ export default function DashboardPage() {
             {/* Quick Add Pocket Action Card */}
             <div
               onClick={() => setIsWalletModalOpen(true)}
-              className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-violet-500/50 dark:hover:border-violet-500/50 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col items-center justify-center text-center h-44 cursor-pointer transition group"
+              className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-violet-500/50 dark:hover:border-violet-500/50 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col items-center justify-center text-center h-32 min-[480px]:h-44 cursor-pointer transition group"
             >
               <div className="w-11 h-11 rounded-2xl bg-violet-500/10 text-violet-500 flex items-center justify-center group-hover:scale-110 transition shadow-sm mb-2">
                 <PlusCircle className="w-5 h-5" />
@@ -768,7 +766,7 @@ export default function DashboardPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-slate-800 dark:text-slate-100 text-xs truncate">
+                            <p className="font-bold text-slate-800 dark:text-slate-100 text-xs leading-snug line-clamp-2 break-words">
                               {tx.merchantName || (isExp ? t.dashboard.expenseLegend : t.dashboard.incomeLegend)}
                             </p>
                             {tx.receiptImageUrl && (

@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DailyExpenseTrend } from "@fintrack/shared";
+import { useLanguage } from "@/context/language-context";
 
 interface DailyTrendChartProps {
   data: DailyExpenseTrend[];
@@ -18,22 +19,32 @@ interface DailyTrendChartProps {
 }
 
 export function DailyTrendChart({ data, isDark = false }: DailyTrendChartProps) {
+  const { language } = useLanguage();
+  const isId = language === "id";
+  const labels = {
+    date: isId ? "Tanggal" : "Day",
+    cashflow: isId ? "Arus Kas" : "Cashflow",
+    expense: isId ? "Pengeluaran" : "Expense",
+    income: isId ? "Pemasukan" : "Income",
+  };
+
   const formatCurrency = (val: number) => {
     if (val >= 1000000) {
       const millions = val / 1000000;
-      return `Rp ${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}jt`;
+      const num = millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1);
+      return isId ? `${num}jt` : `${num}M`;
     }
-    if (val >= 1000) return `Rp ${(val / 1000).toFixed(0)}rb`;
-    return `Rp ${val}`;
+    if (val >= 1000) return isId ? `${(val / 1000).toFixed(0)}rb` : `${(val / 1000).toFixed(0)}K`;
+    return `${val}`;
   };
 
   const tickColor = isDark ? "#818CF8" : "#64748B";
   const gridColor = isDark ? "rgba(99, 102, 241, 0.08)" : "#F1F5F9";
 
   return (
-    <div className="w-full h-64 sm:h-80 relative">
+    <div className="w-full h-56 sm:h-80 relative">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 12, right: 12, left: -4, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 12, right: 8, left: -12, bottom: 0 }}>
           <defs>
             {/* Creative Modern: Cyber Glow Filters */}
             <filter id="neonGlowViolet" x="-20%" y="-20%" width="140%" height="140%">
@@ -77,7 +88,7 @@ export function DailyTrendChart({ data, isDark = false }: DailyTrendChartProps) 
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={48}
+            width={44}
             tick={{ fill: tickColor, fontSize: 11, fontWeight: 600 }}
             tickFormatter={formatCurrency}
           />
@@ -88,24 +99,24 @@ export function DailyTrendChart({ data, isDark = false }: DailyTrendChartProps) 
                 const expense = (payload[0]?.value as number) || 0;
                 const income = (payload[1]?.value as number) || 0;
                 return (
-                  <div className="bg-white/95 dark:bg-[#121826]/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200/90 dark:border-indigo-500/30 text-xs">
+                  <div className="bg-white/95 dark:bg-[#121826]/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-xl border border-slate-200/90 dark:border-indigo-500/30 text-xs max-w-[220px]">
                     <div className="flex items-center justify-between gap-3 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
                       <span className="font-bold text-slate-800 dark:text-white">
-                        Tanggal {label}
+                        {labels.date} {label}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200/50 dark:border-indigo-800/50">
-                        Arus Kas
+                        {labels.cashflow}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-5 py-0.5 text-rose-600 dark:text-rose-400 font-bold">
+                    <div className="flex items-center justify-between gap-4 py-0.5 text-rose-600 dark:text-rose-400 font-bold">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-rose-500 shadow-sm" /> Pengeluaran
+                        <span className="w-2 h-2 rounded-full bg-rose-500 shadow-sm" /> {labels.expense}
                       </span>
                       <span>Rp {expense.toLocaleString("id-ID")}</span>
                     </div>
-                    <div className="flex items-center justify-between gap-5 py-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <div className="flex items-center justify-between gap-4 py-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm" /> Pemasukan
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm" /> {labels.income}
                       </span>
                       <span>Rp {income.toLocaleString("id-ID")}</span>
                     </div>
@@ -123,7 +134,7 @@ export function DailyTrendChart({ data, isDark = false }: DailyTrendChartProps) 
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#creativeExpenseGradient)"
-            name="Pengeluaran"
+            name={labels.expense}
             dot={false}
             activeDot={{
               r: 6,
@@ -140,7 +151,7 @@ export function DailyTrendChart({ data, isDark = false }: DailyTrendChartProps) 
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#creativeIncomeGradient)"
-            name="Pemasukan"
+            name={labels.income}
             dot={false}
             activeDot={{
               r: 6,

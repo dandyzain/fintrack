@@ -88,10 +88,10 @@ export function TransactionFilterBar({
         </div>
 
         {/* Type Filter Buttons */}
-        <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-900/80 rounded-lg border border-slate-200/80 dark:border-white/10 self-start sm:self-auto">
+        <div className="flex w-full sm:w-auto sm:inline-flex p-1 bg-slate-100 dark:bg-slate-900/80 rounded-lg border border-slate-200/80 dark:border-white/10">
           <button
             onClick={() => onFilterChange({ type: "ALL" })}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+            className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-md text-xs font-semibold transition ${
               filters.type === "ALL"
                 ? "bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -101,7 +101,7 @@ export function TransactionFilterBar({
           </button>
           <button
             onClick={() => onFilterChange({ type: "EXPENSE" })}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 ${
+            className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
               filters.type === "EXPENSE"
                 ? "bg-rose-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
@@ -112,7 +112,7 @@ export function TransactionFilterBar({
           </button>
           <button
             onClick={() => onFilterChange({ type: "INCOME" })}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 ${
+            className={`flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
               filters.type === "INCOME"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400"
@@ -125,17 +125,17 @@ export function TransactionFilterBar({
       </div>
 
       {/* Bottom Row: Dropdown Filters & Sort Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
-        <div className="flex flex-wrap items-center gap-2 flex-1">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 sm:flex-1 min-w-0">
           {/* Filter Dompet / Kantong */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <select
               value={filters.walletId}
               onChange={(e) => onFilterChange({ walletId: e.target.value })}
-              className="pl-7 pr-7 py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer"
+              className="w-full sm:w-auto pl-7 pr-3 sm:pr-7 py-2 sm:py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer truncate"
             >
               <option value="">
-                {language === "id" ? `Semua Kantong (${wallets.length})` : `All Pockets (${wallets.length})`}
+                {t.filterBar.allPockets}
               </option>
               {wallets.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -147,14 +147,14 @@ export function TransactionFilterBar({
           </div>
 
           {/* Filter Kategori */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <select
               value={filters.categoryId}
               onChange={(e) => onFilterChange({ categoryId: e.target.value })}
-              className="pl-7 pr-7 py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer"
+              className="w-full sm:w-auto pl-7 pr-3 sm:pr-7 py-2 sm:py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer truncate"
             >
               <option value="">
-                {language === "id" ? `Semua Kategori (${categories.length})` : `All Categories (${categories.length})`}
+                {t.filterBar.allCategories}
               </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -168,7 +168,7 @@ export function TransactionFilterBar({
           {/* Toggle Struk AI Saja */}
           <button
             onClick={() => onFilterChange({ hasReceiptOnly: !filters.hasReceiptOnly })}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 ${
+            className={`justify-center sm:justify-start px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 whitespace-nowrap ${
               filters.hasReceiptOnly
                 ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
                 : "bg-slate-50/70 dark:bg-slate-900/80 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300"
@@ -180,11 +180,11 @@ export function TransactionFilterBar({
           </button>
 
           {/* Sort By Selector */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <select
               value={filters.sortBy}
               onChange={(e) => onFilterChange({ sortBy: e.target.value as any })}
-              className="pl-7 pr-7 py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer"
+              className="w-full sm:w-auto pl-7 pr-3 sm:pr-7 py-2 sm:py-1.5 text-xs bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer truncate"
             >
               <option value="date_desc">{language === "id" ? "Terbaru (Tanggal ↓)" : "Newest (Date ↓)"}</option>
               <option value="date_asc">{language === "id" ? "Terlama (Tanggal ↑)" : "Oldest (Date ↑)"}</option>
@@ -196,7 +196,7 @@ export function TransactionFilterBar({
         </div>
 
         {/* Right Info: Counter & Reset Filter Button */}
-        <div className="flex items-center gap-2.5 self-end sm:self-auto">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {totalShowing} {language === "id" ? "Transaksi" : "Transactions"}
           </span>

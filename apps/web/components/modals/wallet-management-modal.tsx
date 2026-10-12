@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletItem {
   id: string;
@@ -131,17 +132,17 @@ export function WalletManagementModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white/95 dark:bg-[#121826]/95 border border-slate-200/90 dark:border-white/10 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh] relative">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#121826]/95 backdrop-blur-md z-10">
-          <div className="flex items-center gap-3">
+        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3 sticky top-0 bg-white/95 dark:bg-[#121826]/95 backdrop-blur-md z-10">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md ring-2 ring-violet-500/20 flex-shrink-0">
               <Wallet className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className="font-black text-slate-900 dark:text-white text-base tracking-tight">
+                <h3 className="font-black text-slate-900 dark:text-white text-sm sm:text-base tracking-tight leading-tight">
                   {t.modals.walletModalTitle}
                 </h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20 flex items-center gap-1">
+                <span className="hidden sm:inline-flex items-center gap-1 whitespace-nowrap flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
                   <Sparkles className="w-2.5 h-2.5" /> Virtual Deck
                 </span>
               </div>
@@ -153,7 +154,7 @@ export function WalletManagementModal({
           <button
             onClick={onClose}
             aria-label={t.common.close}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 -mr-1 flex-shrink-0 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -262,7 +263,7 @@ export function WalletManagementModal({
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                        {w.name}
+                        {localizeWalletName(w.name, language)}
                       </p>
                       <p className="text-xs font-black text-slate-700 dark:text-slate-300 mt-0.5">
                         Rp {Number(w.balance || 0).toLocaleString("id-ID")}

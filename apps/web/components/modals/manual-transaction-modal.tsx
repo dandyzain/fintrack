@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, PlusCircle, AlertCircle, Loader2, ArrowRight, Sparkles, Wallet, Calendar, Tag, FileText } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { localizeCategoryName, localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletOption {
   id: string;
@@ -32,7 +33,7 @@ export function ManualTransactionModal({
   categories,
   onTransactionSaved,
 }: ManualTransactionModalProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [amount, setAmount] = useState<number>(0);
   const [walletId, setWalletId] = useState<string>(wallets[0]?.id || "");
@@ -100,17 +101,17 @@ export function ManualTransactionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white/95 dark:bg-[#121826]/95 backdrop-blur-2xl rounded-3xl shadow-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto border border-slate-200/90 dark:border-white/10 relative">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-[#121826]/90 backdrop-blur-md z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md ring-2 ring-violet-500/20">
+        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3 sticky top-0 bg-white/90 dark:bg-[#121826]/90 backdrop-blur-md z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md ring-2 ring-violet-500/20 flex-shrink-0">
               <PlusCircle className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                   {t.modals.manualTitle}
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
+                <span className="hidden sm:inline-flex items-center whitespace-nowrap flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/20">
                   Bento Entry
                 </span>
               </div>
@@ -121,7 +122,7 @@ export function ManualTransactionModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 -mr-1 flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -189,7 +190,7 @@ export function ManualTransactionModal({
               >
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id} className="dark:bg-slate-900 dark:text-slate-100">
-                    {w.name} (Rp {Number(w.balance).toLocaleString("id-ID")})
+                    {localizeWalletName(w.name, language)} (Rp {Number(w.balance).toLocaleString("id-ID")})
                   </option>
                 ))}
               </select>
@@ -207,7 +208,7 @@ export function ManualTransactionModal({
                 <option value="" className="dark:bg-slate-900 dark:text-slate-100">{t.modals.selectCategoryPlaceholder}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id} className="dark:bg-slate-900 dark:text-slate-100">
-                    {c.name}
+                    {localizeCategoryName(c.name, language)}
                   </option>
                 ))}
               </select>
