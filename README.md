@@ -19,11 +19,28 @@ finance-tracker/
 ```
 
 ### Tech Stack:
-- **Web App:** Next.js 14, React 18, Tailwind CSS, Recharts, Lucide Icons.
+- **Web App:** Next.js 14 (App Router), React 18, Tailwind CSS, TanStack Query, Radix UI, Framer Motion, Recharts (lazy-loaded), Lucide Icons.
 - **Mobile App:** React Native via Expo SDK 51, Expo Camera, Expo Image Manipulator, TanStack React Query.
 - **Data Layer:** PostgreSQL (Supabase / Neon), Prisma ORM v5, Supabase Storage (bucket `receipts`).
 - **AI Extraction Engine:** Google Gemini Flash (`gemini-1.5-flash`) dengan `responseMimeType: "application/json"`, fallback ke OpenAI Vision (`gpt-4o-mini`).
 - **Validasi & Type Safety:** Zod v3 dengan *Zero Incomplete Implementations* dan *Strict Typing*.
+
+---
+
+## 🎨 Sistem Desain Web — "Aurora Ledger"
+
+Antarmuka web memakai sistem desain *Aurora Ledger*: tata letak tenang yang mengutamakan angka, dengan sedikit momen visual khas (aurora pada saldo, kartu kantong yang miring mengikuti kursor, dan sinar pemindai struk).
+
+| Lapisan | Lokasi | Isi |
+|---|---|---|
+| Token desain | `apps/web/app/globals.css`, `tailwind.config.ts` | Warna berbasis peran (`surface`, `fg`, `brand`, `ai`, `positive`, `negative`, `warning`) untuk mode terang & gelap, lolos kontras WCAG AA. Cyan dikhususkan untuk fitur AI. |
+| Komponen dasar | `apps/web/components/ui/` | Button, Field, AmountInput, Money (mode privasi + animasi angka), Dialog/Sheet/Drawer responsif (Radix + vaul), ConfirmDialog, SegmentedControl, Skeleton, EmptyState. |
+| Data | `apps/web/lib/api/` | Hook TanStack Query di atas Route Handler yang **sama** (tanpa perubahan API). Halaman Ringkasan melakukan *prefetch* di server dengan memanggil API milik aplikasi sendiri. |
+| Format & i18n | `apps/web/lib/format.ts`, `lib/i18n/translations.ts` | Format Rupiah/tanggal terpusat; seluruh teks EN/ID ada di kamus (paritas dijaga oleh TypeScript). |
+
+**Fitur UX:** daftar transaksi per hari dengan *infinite scroll*, filter & ekspor CSV · detail transaksi dengan ubah/hapus + *Undo* · pemindai struk dengan seret-lepas, tempel, kamera, dan penanda kolom yang diisi AI · pemilih bulan · mode privasi saldo · palet perintah (`⌘K`) dan pintasan `N`, `S`, `/` · navigasi bawah di ponsel dengan drawer.
+
+**Aksesibilitas & performa:** 0 pelanggaran axe (WCAG 2.1 AA) di semua halaman, kedua tema, dan semua overlay; menghormati `prefers-reduced-motion`; Lighthouse seluler ≥ 85 di semua halaman.
 
 ---
 
