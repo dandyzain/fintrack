@@ -157,6 +157,9 @@ cp .env.example .env
 ```
 Isi variabel berikut:
 ```env
+# Kunci penandatangan sesi login (WAJIB di production; buat dengan: openssl rand -base64 48)
+SESSION_SECRET="string-acak-panjang"
+
 # Database PostgreSQL (Supabase / Neon)
 DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres"

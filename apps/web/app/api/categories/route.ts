@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@fintrack/database";
-import { getCurrentUserId } from "@/lib/auth";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 import type { ApiResponse } from "@fintrack/shared";
 import { demoStore } from "@/lib/demo-store";
 
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const userId = await getCurrentUserId(request);
+  if (!userId) return unauthorizedResponse();
 
   if (!process.env.DATABASE_URL) {
     return NextResponse.json<ApiResponse>({

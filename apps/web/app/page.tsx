@@ -34,6 +34,7 @@ import { ReceiptScannerModal } from "@/components/modals/receipt-scanner-modal";
 import { ManualTransactionModal } from "@/components/modals/manual-transaction-modal";
 import { WalletManagementModal } from "@/components/modals/wallet-management-modal";
 import { useLanguage } from "@/context/language-context";
+import { apiFetch } from "@/lib/api-client";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import {
   localizeCategoryName,
@@ -139,7 +140,7 @@ export default function DashboardPage() {
       if (currentFilters.hasReceiptOnly) searchParams.append("hasReceipt", "true");
       if (currentFilters.sortBy) searchParams.append("sortBy", currentFilters.sortBy);
 
-      const res = await fetch(`/api/transactions?${searchParams.toString()}`);
+      const res = await apiFetch(`/api/transactions?${searchParams.toString()}`);
       const json = await res.json();
       if (json.success && json.data?.items) {
         setTransactions(json.data.items);
@@ -166,9 +167,9 @@ export default function DashboardPage() {
       setCurrentUser(meJson.data.user);
 
       const [analyticsRes, walletsRes, categoriesRes] = await Promise.all([
-        fetch("/api/analytics"),
-        fetch("/api/wallets"),
-        fetch("/api/categories"),
+        apiFetch("/api/analytics"),
+        apiFetch("/api/wallets"),
+        apiFetch("/api/categories"),
       ]);
 
       const [analyticsJson, walletsJson, categoriesJson] = await Promise.all([

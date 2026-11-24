@@ -6,12 +6,14 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { type AuthUser } from "@fintrack/shared";
 import {
   loginApi,
   registerApi,
   getMeApi,
   setAuthToken,
+  setUnauthorizedHandler,
 } from "../services/api";
 import {
   saveStorageItem,
@@ -47,6 +49,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const logout = useCallback(async () => {
+    setAuthToken(null);
+    setToken(null);
+    setUser(null);
+    // Drop cached API data so the next account to sign in never sees this one's.
+    queryClient.clear();
+    await removeStorageItem(STORAGE_KEY);
+  }, [queryClient]);
+
+  // A 401 from any authenticated API call means the session is gone: log out,
+  // which swaps the app back to the login screen. Registered before the
+  // restore effect below so a rejected stored token is handled too.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void logout();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   // Restore stored session on mount
   useEffect(() => {
@@ -111,13 +133,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const demoLogin = useCallback(async () => {
     await login("dandy@example.com", "password123");
   }, [login]);
-
-  const logout = useCallback(async () => {
-    setAuthToken(null);
-    setToken(null);
-    setUser(null);
-    await removeStorageItem(STORAGE_KEY);
-  }, []);
 
   const refreshUser = useCallback(async () => {
     try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService } from "@/lib/services/transaction.service";
-import { getCurrentUserId } from "@/lib/auth";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 import { UpdateTransactionSchema, type ApiResponse } from "@fintrack/shared";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +14,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
     const transaction = await TransactionService.getTransactionById(params.id, userId);
 
     if (!transaction) {
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
     const body = await request.json();
 
     const validated = UpdateTransactionSchema.safeParse({
@@ -74,6 +76,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
     const result = await TransactionService.deleteTransaction(params.id, userId);
 
     return NextResponse.json<ApiResponse>({

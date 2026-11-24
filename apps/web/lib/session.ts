@@ -1,12 +1,9 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
+import { getSessionSecret } from "./session-secret";
 
 const SESSION_COOKIE_NAME = "fintrack_session";
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  process.env.JWT_SECRET ||
-  "fintrack-secret-key-pastel-ai-2026-very-secure";
 
 export interface SessionPayload {
   userId: string;
@@ -18,6 +15,16 @@ export interface SessionPayload {
 function base64UrlEncode(str: string): string {
   return Buffer.from(str)
     .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+function hmacSignature(data: string, secret: string): string {
+  return crypto
+    .createHmac("sha256", secret)
+    .update(data)
+    .digest("base64")
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
@@ -42,32 +49,37 @@ export function signSessionToken(
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
 
-  const signature = crypto
-    .createHmac("sha256", SESSION_SECRET)
-    .update(`${encodedHeader}.${encodedPayload}`)
-    .digest("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
+  const signature = hmacSignature(
+    `${encodedHeader}.${encodedPayload}`,
+    getSessionSecret()
+  );
 
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
 export function verifySessionToken(token: string): SessionPayload | null {
+  // Resolved outside the try/catch so a missing production secret surfaces as a
+  // server error instead of being silently swallowed as "invalid token".
+  const secret = getSessionSecret();
+
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
 
     const [encodedHeader, encodedPayload, signature] = parts;
-    const expectedSignature = crypto
-      .createHmac("sha256", SESSION_SECRET)
-      .update(`${encodedHeader}.${encodedPayload}`)
-      .digest("base64")
-      .replace(/=/g, "")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
+    const expectedSignature = hmacSignature(
+      `${encodedHeader}.${encodedPayload}`,
+      secret
+    );
 
-    if (signature !== expectedSignature) return null;
+    const given = Buffer.from(signature);
+    const expected = Buffer.from(expectedSignature);
+    if (
+      given.length !== expected.length ||
+      !crypto.timingSafeEqual(given, expected)
+    ) {
+      return null;
+    }
 
     const payload: SessionPayload = JSON.parse(base64UrlDecode(encodedPayload));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {

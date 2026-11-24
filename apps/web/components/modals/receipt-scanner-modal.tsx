@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { ReceiptExtraction, ReceiptItem } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
+import { apiFetch } from "@/lib/api-client";
 import { localizeCategoryName, localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletOption {
@@ -100,7 +101,7 @@ export function ReceiptScannerModal({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await fetch("/api/receipts/scan", {
+      const res = await apiFetch("/api/receipts/scan", {
         method: "POST",
         body: formData,
       });
@@ -216,7 +217,7 @@ export function ReceiptScannerModal({
           })),
       };
 
-      const res = await fetch("/api/transactions", {
+      const res = await apiFetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

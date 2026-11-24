@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@fintrack/database";
-import { getCurrentUserId } from "@/lib/auth";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 import type { ApiResponse } from "@fintrack/shared";
 import { demoStore } from "@/lib/demo-store";
 
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const userId = await getCurrentUserId(request);
+  if (!userId) return unauthorizedResponse();
 
   if (!process.env.DATABASE_URL) {
     return NextResponse.json<ApiResponse>({
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const userId = await getCurrentUserId(request);
+  if (!userId) return unauthorizedResponse();
 
   try {
     const body = await request.json();
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const userId = await getCurrentUserId(request);
+  if (!userId) return unauthorizedResponse();
   const { searchParams } = new URL(request.url);
   const walletId = searchParams.get("id");
 

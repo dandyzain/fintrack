@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, PlusCircle, AlertCircle, Loader2, ArrowRight, Sparkles, Wallet, Calendar, Tag, FileText } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { apiFetch } from "@/lib/api-client";
 import { localizeCategoryName, localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletOption {
@@ -69,7 +70,7 @@ export function ManualTransactionModal({
     setErrorMsg(null);
 
     try {
-      const res = await fetch("/api/transactions", {
+      const res = await apiFetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

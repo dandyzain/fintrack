@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService } from "@/lib/services/transaction.service";
-import { getCurrentUserId } from "@/lib/auth";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 import { CreateTransactionSchema, TransactionQuerySchema, type ApiResponse } from "@fintrack/shared";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
     const { searchParams } = new URL(request.url);
 
     const queryInput = {
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
     const body = await request.json();
 
     const validatedBody = CreateTransactionSchema.safeParse(body);

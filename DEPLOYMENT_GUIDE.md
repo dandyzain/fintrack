@@ -21,11 +21,18 @@ Aplikasi web telah berhasil di-deploy ke Vercel Production:
 4. Masukkan **Environment Variables**:
    | Key | Value (Contoh) | Catatan |
    | :--- | :--- | :--- |
+   | `SESSION_SECRET` | *String acak panjang (hasil `openssl rand -base64 48`)* | **Wajib.** Kunci penandatangan token sesi login |
    | `ENABLE_MOCK_AI` | `true` | Untuk pengujian tanpa API key |
    | `GEMINI_API_KEY` | *API Key Gemini Anda* | Untuk Vision AI OCR langsung |
    | `DATABASE_URL` | *URL PostgreSQL Supabase* | Opsional jika menggunakan cloud DB |
    | `NEXT_PUBLIC_SUPABASE_URL` | *URL Supabase Project* | Opsional untuk storage struk |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | *Anon Key Supabase* | Opsional untuk storage struk |
+   > ⚠️ **`SESSION_SECRET` wajib diisi untuk production.** Tanpa variabel ini server menolak berjalan (`next start` / fungsi Vercel gagal saat start, dan setiap login atau panggilan API mengembalikan error 500). Tidak ada lagi nilai bawaan (fallback) di kode, karena siapa pun yang mengetahui kunci tersebut dapat memalsukan sesi pengguna mana pun.
+   > * Buat nilainya dengan `openssl rand -base64 48` dan simpan hanya di Environment Variables Vercel (jangan di-commit).
+   > * Mengganti nilainya akan mengeluarkan (logout) semua pengguna; mereka cukup login ulang.
+   > * `JWT_SECRET` masih diterima sebagai nama alternatif jika `SESSION_SECRET` kosong.
+   >
+   > **Mode autentikasi API:** jika `DATABASE_URL` diisi, semua endpoint `/api/*` (kecuali `/api/auth/*`) mewajibkan sesi login yang valid dan mengembalikan **401** jika tidak ada. Jika `DATABASE_URL` dikosongkan, aplikasi berjalan dalam **mode demo** memakai data contoh di memori (direset setiap server restart).
 5. Klik **Deploy**. Dalam waktu ~1-2 menit, situs Anda akan aktif dengan domain publik gratis (misal: `https://fintrack-dandyzain.vercel.app`).
 
 ### Cara 2: Deploy Cepat via Terminal (CLI)

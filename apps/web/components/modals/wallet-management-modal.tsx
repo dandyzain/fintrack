@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { apiFetch } from "@/lib/api-client";
 import { localizeWalletName } from "@/lib/i18n/translations";
 
 interface WalletItem {
@@ -59,7 +60,7 @@ export function WalletManagementModal({
     try {
       const numBalance = parseFloat(balance.replace(/[^0-9]/g, "")) || 0;
 
-      const res = await fetch("/api/wallets", {
+      const res = await apiFetch("/api/wallets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -106,7 +107,7 @@ export function WalletManagementModal({
     setSuccessMsg(null);
 
     try {
-      const res = await fetch(`/api/wallets/${wallet.id}`, {
+      const res = await apiFetch(`/api/wallets/${wallet.id}`, {
         method: "DELETE",
       });
 

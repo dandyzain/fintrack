@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { uploadReceiptToStorage } from "@/lib/storage/supabase";
 import { extractReceiptFromImage } from "@/lib/ai/vision";
 import { ReceiptExtractionSchema, type ApiResponse } from "@fintrack/shared";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 
 // Max upload size: 10 MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -17,6 +18,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate before reading the upload or calling paid storage / AI services.
+    const userId = await getCurrentUserId(request);
+    if (!userId) return unauthorizedResponse();
+
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       return NextResponse.json<ApiResponse>(
@@ -66,8 +71,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const userId = (formData.get("userId") as string | null) || "anonymous";
 
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();

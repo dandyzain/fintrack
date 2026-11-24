@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@fintrack/database";
-import { getCurrentUserId } from "@/lib/auth";
+import { getCurrentUserId, unauthorizedResponse } from "@/lib/auth";
 import type { ApiResponse } from "@fintrack/shared";
 import { demoStore } from "@/lib/demo-store";
 
@@ -11,6 +11,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const userId = await getCurrentUserId(request);
+  if (!userId) return unauthorizedResponse();
   const walletId = params.id;
 
   if (!walletId) {

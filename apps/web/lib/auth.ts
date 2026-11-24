@@ -1,7 +1,9 @@
 import { prisma } from "@fintrack/database";
-import { demoStore } from "./demo-store";
-import { getSessionFromRequest } from "./session";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { ApiResponse } from "@fintrack/shared";
+import { demoStore } from "./demo-store";
+import { getSessionFromRequest, SESSION_COOKIE_NAME } from "./session";
 
 export interface CurrentUser {
   id: string;
@@ -49,15 +51,46 @@ export async function getCurrentUser(
 }
 
 /**
- * Returns the authenticated user's ID or falls back to demo user ID
- * for seamless developer / portfolio demo mode.
+ * True when no database is configured and the app runs entirely on the
+ * in-memory demo store (local dev / portfolio sandbox).
+ */
+export function isDemoMode(): boolean {
+  return !process.env.DATABASE_URL;
+}
+
+/**
+ * Returns the authenticated user's ID, or null if the request has no valid
+ * session.
+ *
+ * In demo mode (no DATABASE_URL) an unauthenticated request falls back to the
+ * shared in-memory demo user so the sandbox keeps working. With a real database
+ * there is no fallback: callers must reject the request (see
+ * `unauthorizedResponse`).
  */
 export async function getCurrentUserId(
   request?: NextRequest | Request
-): Promise<string> {
+): Promise<string | null> {
   const user = await getCurrentUser(request);
   if (user) return user.id;
 
-  // Default fallback user for demonstration
-  return demoStore.userId;
+  if (isDemoMode()) return demoStore.userId;
+
+  return null;
+}
+
+/**
+ * Standard 401 response for API routes. Also expires the session cookie so a
+ * stale or forged cookie can't bounce the browser between `/` and `/login`
+ * (middleware only checks the cookie's shape, not its signature).
+ */
+export function unauthorizedResponse(): NextResponse<ApiResponse> {
+  const response = NextResponse.json<ApiResponse>(
+    {
+      success: false,
+      error: "Sesi tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali.",
+    },
+    { status: 401 }
+  );
+  response.cookies.delete(SESSION_COOKIE_NAME);
+  return response;
 }

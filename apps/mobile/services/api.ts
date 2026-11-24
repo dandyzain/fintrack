@@ -24,6 +24,33 @@ export function getAuthToken(): string | null {
   return currentAuthToken;
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+/**
+ * Registers a callback invoked when an authenticated request gets a 401
+ * (expired/invalid session). AuthContext uses it to log out, which sends the
+ * user back to the login screen.
+ */
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+/**
+ * fetch() for authenticated endpoints. On 401 it notifies the unauthorized
+ * handler, but only if the token that was rejected is still the current one, so
+ * a slow request from a previous session can't log out a fresh login.
+ *
+ * Not used for login/register, where a 401 just means wrong credentials.
+ */
+async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const tokenUsed = currentAuthToken;
+  const response = await fetch(url, init);
+  if (response.status === 401 && tokenUsed === currentAuthToken) {
+    unauthorizedHandler?.();
+  }
+  return response;
+}
+
 function getAuthHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -97,7 +124,7 @@ export async function registerApi(
  * Get current session user profile
  */
 export async function getMeApi(): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+  const response = await authFetch(`${API_BASE_URL}/api/auth/me`, {
     headers: getAuthHeaders(),
   });
 
@@ -127,7 +154,7 @@ export async function scanReceiptApi(
     type: mimeType,
   });
 
-  const response = await fetch(`${API_BASE_URL}/api/receipts/scan`, {
+  const response = await authFetch(`${API_BASE_URL}/api/receipts/scan`, {
     method: "POST",
     body: formData,
     headers: getAuthHeaders(),
@@ -159,7 +186,7 @@ export async function createTransactionApi(
     throw new Error("Validasi data transaksi gagal sebelum dikirim.");
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/transactions`, {
+  const response = await authFetch(`${API_BASE_URL}/api/transactions`, {
     method: "POST",
     headers: getAuthHeaders({
       "Content-Type": "application/json",
@@ -179,7 +206,7 @@ export async function createTransactionApi(
  * Fetches dashboard analytics
  */
 export async function fetchAnalyticsApi(): Promise<DashboardAnalyticsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/analytics`, {
+  const response = await authFetch(`${API_BASE_URL}/api/analytics`, {
     headers: getAuthHeaders(),
   });
 
@@ -195,7 +222,7 @@ export async function fetchAnalyticsApi(): Promise<DashboardAnalyticsResponse> {
  * Fetches user wallets
  */
 export async function fetchWalletsApi() {
-  const response = await fetch(`${API_BASE_URL}/api/wallets`, {
+  const response = await authFetch(`${API_BASE_URL}/api/wallets`, {
     headers: getAuthHeaders(),
   });
 
@@ -211,7 +238,7 @@ export async function fetchWalletsApi() {
  * Creates a new wallet/pocket
  */
 export async function createWalletApi(name: string, balance: number = 0) {
-  const response = await fetch(`${API_BASE_URL}/api/wallets`, {
+  const response = await authFetch(`${API_BASE_URL}/api/wallets`, {
     method: "POST",
     headers: getAuthHeaders({
       "Content-Type": "application/json",
@@ -231,7 +258,7 @@ export async function createWalletApi(name: string, balance: number = 0) {
  * Deletes a wallet/pocket
  */
 export async function deleteWalletApi(walletId: string) {
-  const response = await fetch(`${API_BASE_URL}/api/wallets?id=${walletId}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/wallets?id=${walletId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -248,7 +275,7 @@ export async function deleteWalletApi(walletId: string) {
  * Fetches categories
  */
 export async function fetchCategoriesApi() {
-  const response = await fetch(`${API_BASE_URL}/api/categories`, {
+  const response = await authFetch(`${API_BASE_URL}/api/categories`, {
     headers: getAuthHeaders(),
   });
 
@@ -300,7 +327,7 @@ export async function fetchTransactionsApi(
     url += `?limit=20`;
   }
 
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     headers: getAuthHeaders(),
   });
 
