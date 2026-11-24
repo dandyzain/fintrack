@@ -81,8 +81,7 @@ export class TransactionService {
 
     const decimalAmount = new Prisma.Decimal(amount);
 
-    try {
-      return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
       // 1. Validate wallet existence and ownership
       const wallet = await tx.wallet.findFirst({
         where: { id: walletId, userId },
@@ -159,10 +158,6 @@ export class TransactionService {
 
       return createdTransaction as TransactionWithRelations;
     });
-    } catch (dbErr) {
-      console.warn("Prisma error in createTransaction. Menggunakan DemoStore lokal:", (dbErr as Error).message);
-      return demoStore.createTransaction(input) as unknown as TransactionWithRelations;
-    }
   }
 
   /**
@@ -177,8 +172,7 @@ export class TransactionService {
 
     const { id, userId, ...updates } = input;
 
-    try {
-      return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
       // 1. Fetch current transaction record with relations
       const existing = await tx.transaction.findFirst({
         where: { id, userId },
@@ -299,10 +293,6 @@ export class TransactionService {
 
       return updatedTx as TransactionWithRelations;
     });
-    } catch (err) {
-      console.warn("Prisma error in updateTransaction. Menggunakan DemoStore lokal:", (err as Error).message);
-      return demoStore.updateTransaction(input) as unknown as TransactionWithRelations;
-    }
   }
 
   /**
@@ -316,8 +306,7 @@ export class TransactionService {
       return demoStore.deleteTransaction(id);
     }
 
-    try {
-      return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.findFirst({
         where: { id, userId },
         include: { wallet: true },
@@ -347,10 +336,6 @@ export class TransactionService {
 
       return { success: true, deletedId: id };
     });
-    } catch (err) {
-      console.warn("Prisma error in deleteTransaction. Menggunakan DemoStore lokal:", (err as Error).message);
-      return demoStore.deleteTransaction(id);
-    }
   }
 
   /**
@@ -364,20 +349,16 @@ export class TransactionService {
       return demoStore.getTransactionById(id) as unknown as TransactionWithRelations | null;
     }
 
-    try {
-      const transaction = await prisma.transaction.findFirst({
-        where: { id, userId },
-        include: {
-          wallet: { select: { id: true, name: true, balance: true } },
-          category: { select: { id: true, name: true, icon: true, color: true } },
-          items: true,
-        },
-      });
+    const transaction = await prisma.transaction.findFirst({
+      where: { id, userId },
+      include: {
+        wallet: { select: { id: true, name: true, balance: true } },
+        category: { select: { id: true, name: true, icon: true, color: true } },
+        items: true,
+      },
+    });
 
-      return transaction as TransactionWithRelations | null;
-    } catch (err) {
-      return demoStore.getTransactionById(id) as unknown as TransactionWithRelations | null;
-    }
+    return transaction as TransactionWithRelations | null;
   }
 
   /**
@@ -390,70 +371,66 @@ export class TransactionService {
       return demoStore.getTransactions(query) as unknown as PaginatedTransactions;
     }
 
-    try {
-      const { userId, walletId, categoryId, type, startDate, endDate, search, page, limit, hasReceipt, sortBy } = query;
+    const { userId, walletId, categoryId, type, startDate, endDate, search, page, limit, hasReceipt, sortBy } = query;
 
-      const skip = (page - 1) * limit;
-      const where: Prisma.TransactionWhereInput = {
-        userId,
-        ...(walletId ? { walletId } : {}),
-        ...(categoryId ? { categoryId } : {}),
-        ...(type ? { type: type as TransactionType } : {}),
-        ...(hasReceipt === "true"
-          ? { receiptImageUrl: { not: null } }
-          : hasReceipt === "false"
-          ? { receiptImageUrl: null }
-          : {}),
-        ...(startDate || endDate
-          ? {
-              date: {
-                ...(startDate ? { gte: new Date(startDate) } : {}),
-                ...(endDate ? { lte: new Date(endDate) } : {}),
-              },
-            }
-          : {}),
-        ...(search
-          ? {
-              OR: [
-                { merchantName: { contains: search } },
-                { notes: { contains: search } },
-              ],
-            }
-          : {}),
-      };
+    const skip = (page - 1) * limit;
+    const where: Prisma.TransactionWhereInput = {
+      userId,
+      ...(walletId ? { walletId } : {}),
+      ...(categoryId ? { categoryId } : {}),
+      ...(type ? { type: type as TransactionType } : {}),
+      ...(hasReceipt === "true"
+        ? { receiptImageUrl: { not: null } }
+        : hasReceipt === "false"
+        ? { receiptImageUrl: null }
+        : {}),
+      ...(startDate || endDate
+        ? {
+            date: {
+              ...(startDate ? { gte: new Date(startDate) } : {}),
+              ...(endDate ? { lte: new Date(endDate) } : {}),
+            },
+          }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { merchantName: { contains: search } },
+              { notes: { contains: search } },
+            ],
+          }
+        : {}),
+    };
 
-      let orderBy: Prisma.TransactionOrderByWithRelationInput = { date: "desc" };
-      if (sortBy === "date_asc") orderBy = { date: "asc" };
-      else if (sortBy === "amount_desc") orderBy = { amount: "desc" };
-      else if (sortBy === "amount_asc") orderBy = { amount: "asc" };
+    let orderBy: Prisma.TransactionOrderByWithRelationInput = { date: "desc" };
+    if (sortBy === "date_asc") orderBy = { date: "asc" };
+    else if (sortBy === "amount_desc") orderBy = { amount: "desc" };
+    else if (sortBy === "amount_asc") orderBy = { amount: "asc" };
 
-      const [total, items] = await Promise.all([
-        prisma.transaction.count({ where }),
-        prisma.transaction.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy,
-          include: {
-            wallet: { select: { id: true, name: true, balance: true } },
-            category: { select: { id: true, name: true, icon: true, color: true } },
-            items: true,
-          },
-        }),
-      ]);
-
-      return {
-        items: items as TransactionWithRelations[],
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit) || 1,
+    const [total, items] = await Promise.all([
+      prisma.transaction.count({ where }),
+      prisma.transaction.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          wallet: { select: { id: true, name: true, balance: true } },
+          category: { select: { id: true, name: true, icon: true, color: true } },
+          items: true,
         },
-      };
-    } catch (err) {
-      return demoStore.getTransactions(query) as unknown as PaginatedTransactions;
-    }
+      }),
+    ]);
+
+    return {
+      items: items as TransactionWithRelations[],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
   }
 
   /**
@@ -471,9 +448,8 @@ export class TransactionService {
       return demoStore.getMonthlyAnalytics(month, year, userId);
     }
 
-    try {
-      // Determine start and end date for the target month (UTC normalized)
-      const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    // Determine start and end date for the target month (UTC normalized)
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
     // Last day of month
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
     const totalDaysInMonth = new Date(year, month, 0).getDate();
@@ -629,13 +605,10 @@ export class TransactionService {
       });
     }
 
-      return {
-        summary,
-        budgetComparisons,
-        dailyTrends,
-      };
-    } catch (err) {
-      return demoStore.getMonthlyAnalytics(month, year, userId);
-    }
+    return {
+      summary,
+      budgetComparisons,
+      dailyTrends,
+    };
   }
 }

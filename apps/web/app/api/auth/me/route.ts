@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import type { ApiResponse, AuthUser } from "@fintrack/shared";
+import { databaseErrorResponse } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("GET /api/auth/me", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     return NextResponse.json<ApiResponse>(
       {
         success: false,

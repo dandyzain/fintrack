@@ -4,6 +4,7 @@ import { LoginSchema, type ApiResponse, type AuthResponseData } from "@fintrack/
 import { prisma } from "@fintrack/database";
 import { demoStore } from "@/lib/demo-store";
 import { signSessionToken, setSessionCookie } from "@/lib/session";
+import { databaseErrorResponse } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -37,46 +38,35 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      try {
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
+      // Database errors propagate to the outer catch (no session is issued).
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
 
-        if (!user || !user.passwordHash) {
-          return NextResponse.json<ApiResponse>(
-            { success: false, error: "Email atau kata sandi tidak cocok." },
-            { status: 401 }
-          );
-        }
-
-        const [salt, storedHash] = user.passwordHash.split(":");
-        const testHash = crypto
-          .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-          .toString("hex");
-
-        if (testHash !== storedHash) {
-          return NextResponse.json<ApiResponse>(
-            { success: false, error: "Email atau kata sandi tidak cocok." },
-            { status: 401 }
-          );
-        }
-
-        authUser = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
-      } catch (err) {
-        // Fallback to demo store if DB fails
-        try {
-          authUser = demoStore.loginUser(email, password);
-        } catch (subErr) {
-          return NextResponse.json<ApiResponse>(
-            { success: false, error: "Email atau kata sandi tidak cocok." },
-            { status: 401 }
-          );
-        }
+      if (!user || !user.passwordHash) {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: "Email atau kata sandi tidak cocok." },
+          { status: 401 }
+        );
       }
+
+      const [salt, storedHash] = user.passwordHash.split(":");
+      const testHash = crypto
+        .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+        .toString("hex");
+
+      if (testHash !== storedHash) {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: "Email atau kata sandi tidak cocok." },
+          { status: 401 }
+        );
+      }
+
+      authUser = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      };
     }
 
     const token = signSessionToken({
@@ -111,6 +101,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("POST /api/auth/login", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     console.error("Error in POST /api/auth/login:", error);
     return NextResponse.json<ApiResponse>(
       {

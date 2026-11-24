@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService } from "@/lib/services/transaction.service";
 import { getCurrentUserId } from "@/lib/auth";
+import { databaseErrorResponse } from "@/lib/api-errors";
 import { UpdateTransactionSchema, type ApiResponse } from "@fintrack/shared";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json<ApiResponse>({ success: true, data: transaction });
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("GET /api/transactions/[id]", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     return NextResponse.json<ApiResponse>(
       { success: false, error: (error as Error).message },
       { status: 500 }
@@ -64,6 +68,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       message: "Transaksi berhasil diperbarui dan penyesuaian saldo dompet telah disinkronkan.",
     });
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("PUT /api/transactions/[id]", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     return NextResponse.json<ApiResponse>(
       { success: false, error: (error as Error).message },
       { status: 500 }
@@ -82,6 +89,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       message: "Transaksi berhasil dihapus dan saldo dompet telah dikembalikan secara atomik.",
     });
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("DELETE /api/transactions/[id]", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     return NextResponse.json<ApiResponse>(
       { success: false, error: (error as Error).message },
       { status: 500 }

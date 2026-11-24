@@ -29,19 +29,13 @@ export async function getCurrentUser(
         };
       }
     } else {
-      try {
-        const user = await prisma.user.findUnique({
-          where: { id: session.userId },
-          select: { id: true, name: true, email: true },
-        });
-        if (user) return user;
-      } catch (err) {
-        // Fallback to demo store if database throws
-        const user = demoStore.getUserById(session.userId);
-        if (user) {
-          return { id: user.id, name: user.name, email: user.email };
-        }
-      }
+      // Database errors propagate to the caller; never resolve real-mode
+      // sessions against the in-memory demo store.
+      const user = await prisma.user.findUnique({
+        where: { id: session.userId },
+        select: { id: true, name: true, email: true },
+      });
+      if (user) return user;
     }
   }
 

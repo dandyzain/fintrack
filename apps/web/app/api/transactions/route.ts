@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService } from "@/lib/services/transaction.service";
 import { getCurrentUserId } from "@/lib/auth";
+import { databaseErrorResponse } from "@/lib/api-errors";
 import { CreateTransactionSchema, TransactionQuerySchema, type ApiResponse } from "@fintrack/shared";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,9 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("GET /api/transactions", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     console.error("Error in GET /api/transactions:", error);
     return NextResponse.json<ApiResponse>(
       {
@@ -94,6 +98,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("POST /api/transactions", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     console.error("Error in POST /api/transactions:", error);
     return NextResponse.json<ApiResponse>(
       {

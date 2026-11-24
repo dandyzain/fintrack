@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService } from "@/lib/services/transaction.service";
 import { getCurrentUserId } from "@/lib/auth";
+import { databaseErrorResponse } from "@/lib/api-errors";
 import type { ApiResponse, DashboardAnalyticsResponse } from "@fintrack/shared";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("GET /api/analytics", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     console.error("Error in GET /api/analytics:", error);
     return NextResponse.json<ApiResponse>(
       {

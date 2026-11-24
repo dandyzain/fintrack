@@ -3,20 +3,21 @@ import { prisma } from "@fintrack/database";
 import { getCurrentUserId } from "@/lib/auth";
 import type { ApiResponse } from "@fintrack/shared";
 import { demoStore } from "@/lib/demo-store";
+import { internalErrorResponse } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const userId = await getCurrentUserId(request);
-
-  if (!process.env.DATABASE_URL) {
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: demoStore.getWallets(userId),
-    });
-  }
-
   try {
+    const userId = await getCurrentUserId(request);
+
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json<ApiResponse>({
+        success: true,
+        data: demoStore.getWallets(userId),
+      });
+    }
+
     const wallets = await prisma.wallet.findMany({
       where: { userId },
       orderBy: { name: "asc" },
@@ -32,17 +33,13 @@ export async function GET(request: NextRequest) {
       data: wallets,
     });
   } catch (error) {
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: demoStore.getWallets(userId),
-    });
+    return internalErrorResponse("GET /api/wallets", error);
   }
 }
 
 export async function POST(request: NextRequest) {
-  const userId = await getCurrentUserId(request);
-
   try {
+    const userId = await getCurrentUserId(request);
     const body = await request.json();
 
     if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
@@ -75,50 +72,38 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    const body = await request.clone().json().catch(() => ({}));
-    if (body.name) {
-      const wallet = demoStore.createWallet(userId, body.name, body.balance || 0);
-      return NextResponse.json<ApiResponse>({
-        success: true,
-        data: wallet,
-        message: "Dompet berhasil dibuat.",
-      });
-    }
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
+    return internalErrorResponse("POST /api/wallets", error);
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const userId = await getCurrentUserId(request);
-  const { searchParams } = new URL(request.url);
-  const walletId = searchParams.get("id");
+  try {
+    const userId = await getCurrentUserId(request);
+    const { searchParams } = new URL(request.url);
+    const walletId = searchParams.get("id");
 
-  if (!walletId) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: "ID kantong wajib disertakan." },
-      { status: 400 }
-    );
-  }
-
-  if (!process.env.DATABASE_URL) {
-    try {
-      demoStore.deleteWallet(userId, walletId);
-      return NextResponse.json<ApiResponse>({
-        success: true,
-        message: "Kantong berhasil dihapus.",
-      });
-    } catch (err) {
+    if (!walletId) {
       return NextResponse.json<ApiResponse>(
-        { success: false, error: (err as Error).message },
+        { success: false, error: "ID kantong wajib disertakan." },
         { status: 400 }
       );
     }
-  }
 
-  try {
+    if (!process.env.DATABASE_URL) {
+      try {
+        demoStore.deleteWallet(userId, walletId);
+        return NextResponse.json<ApiResponse>({
+          success: true,
+          message: "Kantong berhasil dihapus.",
+        });
+      } catch (err) {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: (err as Error).message },
+          { status: 400 }
+        );
+      }
+    }
+
     const userWalletsCount = await prisma.wallet.count({ where: { userId } });
     if (userWalletsCount <= 1) {
       return NextResponse.json<ApiResponse>(
@@ -144,10 +129,6 @@ export async function DELETE(request: NextRequest) {
       message: "Kantong berhasil dihapus.",
     });
   } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
+    return internalErrorResponse("DELETE /api/wallets", error);
   }
 }
-

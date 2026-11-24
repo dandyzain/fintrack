@@ -4,6 +4,7 @@ import { RegisterSchema, type ApiResponse, type AuthResponseData } from "@fintra
 import { prisma } from "@fintrack/database";
 import { demoStore } from "@/lib/demo-store";
 import { signSessionToken, setSessionCookie } from "@/lib/session";
+import { databaseErrorResponse } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -37,25 +38,28 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      try {
-        const existing = await prisma.user.findUnique({
-          where: { email },
-        });
+      // Database errors propagate to the outer catch (no session is issued).
+      const existing = await prisma.user.findUnique({
+        where: { email },
+      });
 
-        if (existing) {
-          return NextResponse.json<ApiResponse>(
-            { success: false, error: "Email sudah terdaftar. Silakan gunakan email lain atau masuk." },
-            { status: 409 }
-          );
-        }
+      if (existing) {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: "Email sudah terdaftar. Silakan gunakan email lain atau masuk." },
+          { status: 409 }
+        );
+      }
 
-        const salt = crypto.randomBytes(16).toString("hex");
-        const passwordHash = crypto
-          .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-          .toString("hex");
-        const fullHash = `${salt}:${passwordHash}`;
+      const salt = crypto.randomBytes(16).toString("hex");
+      const passwordHash = crypto
+        .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+        .toString("hex");
+      const fullHash = `${salt}:${passwordHash}`;
 
-        const createdUser = await prisma.user.create({
+      // Create the user and its starter data atomically, so a failure part-way
+      // through doesn't leave an account without wallets or categories.
+      const createdUser = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
           data: {
             name,
             email,
@@ -64,35 +68,34 @@ export async function POST(request: NextRequest) {
         });
 
         // Initialize starter wallets
-        await prisma.wallet.createMany({
+        await tx.wallet.createMany({
           data: [
-            { userId: createdUser.id, name: "Rekening Bank", balance: 0 },
-            { userId: createdUser.id, name: "Dompet Tunai", balance: 0 },
-            { userId: createdUser.id, name: "E-Wallet", balance: 0 },
+            { userId: user.id, name: "Rekening Bank", balance: 0 },
+            { userId: user.id, name: "Dompet Tunai", balance: 0 },
+            { userId: user.id, name: "E-Wallet", balance: 0 },
           ],
         });
 
         // Initialize default categories
-        await prisma.category.createMany({
+        await tx.category.createMany({
           data: [
-            { userId: createdUser.id, name: "Makanan & Minuman", icon: "Utensils", color: "#F97316" },
-            { userId: createdUser.id, name: "Belanja Bulanan", icon: "ShoppingCart", color: "#10B981" },
-            { userId: createdUser.id, name: "Transportasi", icon: "Car", color: "#3B82F6" },
-            { userId: createdUser.id, name: "Kesehatan", icon: "HeartPulse", color: "#EC4899" },
-            { userId: createdUser.id, name: "Hiburan", icon: "Film", color: "#8B5CF6" },
-            { userId: createdUser.id, name: "Lainnya", icon: "Tag", color: "#6B7280" },
+            { userId: user.id, name: "Makanan & Minuman", icon: "Utensils", color: "#F97316" },
+            { userId: user.id, name: "Belanja Bulanan", icon: "ShoppingCart", color: "#10B981" },
+            { userId: user.id, name: "Transportasi", icon: "Car", color: "#3B82F6" },
+            { userId: user.id, name: "Kesehatan", icon: "HeartPulse", color: "#EC4899" },
+            { userId: user.id, name: "Hiburan", icon: "Film", color: "#8B5CF6" },
+            { userId: user.id, name: "Lainnya", icon: "Tag", color: "#6B7280" },
           ],
         });
 
-        authUser = {
-          id: createdUser.id,
-          name: createdUser.name,
-          email: createdUser.email,
-        };
-      } catch (err) {
-        // Fallback to local demo store if DB fails
-        authUser = demoStore.registerUser(name, email, password);
-      }
+        return user;
+      });
+
+      authUser = {
+        id: createdUser.id,
+        name: createdUser.name,
+        email: createdUser.email,
+      };
     }
 
     const token = signSessionToken({
@@ -128,6 +131,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    const dbErrorResponse = databaseErrorResponse("POST /api/auth/register", error);
+    if (dbErrorResponse) return dbErrorResponse;
+
     console.error("Error in POST /api/auth/register:", error);
     return NextResponse.json<ApiResponse>(
       {
