@@ -1,17 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { LanguageProvider } from "@/context/language-context";
+import { fontSans } from "./fonts";
+import { AppProviders } from "@/components/providers/app-providers";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F6F7FB" },
+    { media: "(prefers-color-scheme: dark)", color: "#070A13" },
+  ],
 };
 
 export const metadata: Metadata = {
-  title: "FinTrack AI - Personal Finance & OCR Receipt Scanner",
+  title: {
+    default: "FinTrack AI — Personal Finance & Receipt Scanner",
+    template: "%s · FinTrack AI",
+  },
   description:
-    "Smart Personal Finance & Expense Tracker with automatic receipt OCR scanning powered by Vision AI.",
+    "Smart personal finance and expense tracker with automatic receipt scanning powered by Vision AI.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
@@ -19,39 +28,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={fontSans.variable}>
       <head>
+        {/* Restore the saved language before paint (theme is handled by next-themes). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                var theme = localStorage.getItem('fintrack-theme');
-                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (theme === 'dark' || (!theme && prefersDark)) {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-
-                var lang = localStorage.getItem('fintrack-lang');
-                if (lang === 'id' || lang === 'en') {
-                  document.documentElement.lang = lang;
-                } else {
-                  document.documentElement.lang = 'en';
-                }
-              } catch (e) {}
-            `,
+            __html: `try{var l=localStorage.getItem('fintrack-lang');document.documentElement.lang=(l==='id'||l==='en')?l:'en';}catch(e){}`,
           }}
         />
       </head>
-      <body className="bg-[#F8FAFC] text-slate-900 dark:bg-[#090D16] dark:text-slate-100 antialiased min-h-screen">
-        <LanguageProvider>{children}</LanguageProvider>
+      <body className="min-h-dvh">
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
