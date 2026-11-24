@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import { hashPassword, verifyPassword } from "./password";
 import type {
   CreateTransactionInput,
   UpdateTransactionInput,
@@ -16,8 +16,8 @@ export interface DemoUser {
   id: string;
   name: string;
   email: string;
+  /** Output of hashPassword(); salt and parameters are embedded. */
   passwordHash: string;
-  salt: string;
   createdAt: string;
 }
 
@@ -67,6 +67,11 @@ export interface DemoBudget {
   year: number;
 }
 
+// hashPassword("password123"), precomputed so startup doesn't run a 210k-iteration
+// PBKDF2. The demo password is public (shown on /demo), so this reveals nothing.
+const DEMO_PASSWORD_HASH =
+  "pbkdf2-sha512$210000$405bc585e914c37c8c6c842a36b2ddbd$6bccd6634ffa00b631a92afc376755f0346c87710dd98f4834d01ef1f18cd5b50e621c31c024bfe7a20e6c22305cb0b84b35cf347584809bd8622d131b19d9a7";
+
 class DemoStoreSingleton {
   public userId = "a0000000-0000-0000-0000-000000000001";
   public users: DemoUser[] = [];
@@ -80,19 +85,13 @@ class DemoStoreSingleton {
   }
 
   private initDemoData() {
-    const demoSalt = "demo-salt-pastel-fintrack-2026";
-    const demoPasswordHash = crypto
-      .pbkdf2Sync("password123", demoSalt, 1000, 64, "sha512")
-      .toString("hex");
-
     // Seed Demo User
     this.users = [
       {
         id: this.userId,
         name: "Dandy Zain",
         email: "dandy@example.com",
-        passwordHash: demoPasswordHash,
-        salt: demoSalt,
+        passwordHash: DEMO_PASSWORD_HASH,
         createdAt: new Date().toISOString(),
       },
     ];
@@ -200,20 +199,24 @@ class DemoStoreSingleton {
   }
 
   // --- Auth Methods ---
-  public registerUser(
+  public async registerUser(
     name: string,
     email: string,
     password: string
-  ): { id: string; name: string; email: string; createdAt: string } {
+  ): Promise<{ id: string; name: string; email: string; createdAt: string }> {
     const normalizedEmail = email.trim().toLowerCase();
-    if (this.users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
+    const isTaken = () =>
+      this.users.some((u) => u.email.toLowerCase() === normalizedEmail);
+    if (isTaken()) {
       throw new Error("Email sudah terdaftar. Silakan gunakan email lain atau masuk.");
     }
 
-    const salt = crypto.randomBytes(16).toString("hex");
-    const passwordHash = crypto
-      .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-      .toString("hex");
+    const passwordHash = await hashPassword(password);
+
+    // Re-check: a concurrent registration may have claimed the email while hashing.
+    if (isTaken()) {
+      throw new Error("Email sudah terdaftar. Silakan gunakan email lain atau masuk.");
+    }
 
     const id = `u-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const createdAt = new Date().toISOString();
@@ -223,7 +226,6 @@ class DemoStoreSingleton {
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      salt,
       createdAt,
     };
 
@@ -239,21 +241,17 @@ class DemoStoreSingleton {
     return { id, name: newUser.name, email: newUser.email, createdAt };
   }
 
-  public loginUser(
+  public async loginUser(
     email: string,
     password: string
-  ): { id: string; name: string; email: string; createdAt: string } {
+  ): Promise<{ id: string; name: string; email: string; createdAt: string }> {
     const normalizedEmail = email.trim().toLowerCase();
     const user = this.users.find((u) => u.email.toLowerCase() === normalizedEmail);
     if (!user) {
       throw new Error("Email atau kata sandi tidak cocok.");
     }
 
-    const testHash = crypto
-      .pbkdf2Sync(password, user.salt, 1000, 64, "sha512")
-      .toString("hex");
-
-    if (testHash !== user.passwordHash) {
+    if (!(await verifyPassword(password, user.passwordHash))) {
       throw new Error("Email atau kata sandi tidak cocok.");
     }
 

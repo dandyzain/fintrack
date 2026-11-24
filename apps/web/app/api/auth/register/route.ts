@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { RegisterSchema, type ApiResponse, type AuthResponseData } from "@fintrack/shared";
 import { prisma } from "@fintrack/database";
 import { demoStore } from "@/lib/demo-store";
+import { hashPassword } from "@/lib/password";
 import { signSessionToken, setSessionCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.DATABASE_URL) {
       try {
-        authUser = demoStore.registerUser(name, email, password);
+        authUser = await demoStore.registerUser(name, email, password);
       } catch (err) {
         return NextResponse.json<ApiResponse>(
           { success: false, error: (err as Error).message },
@@ -49,17 +49,13 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const salt = crypto.randomBytes(16).toString("hex");
-        const passwordHash = crypto
-          .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-          .toString("hex");
-        const fullHash = `${salt}:${passwordHash}`;
+        const passwordHash = await hashPassword(password);
 
         const createdUser = await prisma.user.create({
           data: {
             name,
             email,
-            passwordHash: fullHash,
+            passwordHash,
           },
         });
 
@@ -91,7 +87,7 @@ export async function POST(request: NextRequest) {
         };
       } catch (err) {
         // Fallback to local demo store if DB fails
-        authUser = demoStore.registerUser(name, email, password);
+        authUser = await demoStore.registerUser(name, email, password);
       }
     }
 

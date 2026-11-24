@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { LoginSchema, type ApiResponse, type AuthResponseData } from "@fintrack/shared";
 import { prisma } from "@fintrack/database";
 import { demoStore } from "@/lib/demo-store";
+import { hashPassword, passwordNeedsRehash, verifyPassword } from "@/lib/password";
 import { signSessionToken, setSessionCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.DATABASE_URL) {
       try {
-        authUser = demoStore.loginUser(email, password);
+        authUser = await demoStore.loginUser(email, password);
       } catch (err) {
         return NextResponse.json<ApiResponse>(
           { success: false, error: (err as Error).message },
@@ -49,16 +49,25 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const [salt, storedHash] = user.passwordHash.split(":");
-        const testHash = crypto
-          .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-          .toString("hex");
-
-        if (testHash !== storedHash) {
+        if (!(await verifyPassword(password, user.passwordHash))) {
           return NextResponse.json<ApiResponse>(
             { success: false, error: "Email atau kata sandi tidak cocok." },
             { status: 401 }
           );
+        }
+
+        if (passwordNeedsRehash(user.passwordHash)) {
+          // Transparently upgrade legacy/weaker hashes now that we have the
+          // plaintext. Only overwrite the exact hash we just verified, and
+          // never fail the login over it.
+          try {
+            await prisma.user.updateMany({
+              where: { id: user.id, passwordHash: user.passwordHash },
+              data: { passwordHash: await hashPassword(password) },
+            });
+          } catch (upgradeErr) {
+            console.error("Failed to upgrade password hash for user", user.id, upgradeErr);
+          }
         }
 
         authUser = {
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         // Fallback to demo store if DB fails
         try {
-          authUser = demoStore.loginUser(email, password);
+          authUser = await demoStore.loginUser(email, password);
         } catch (subErr) {
           return NextResponse.json<ApiResponse>(
             { success: false, error: "Email atau kata sandi tidak cocok." },
