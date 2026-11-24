@@ -45,6 +45,8 @@ const config: Config = {
         ai: {
           DEFAULT: role("ai"),
           fg: role("ai-fg"),
+          /** Text/icons placed on AI cyan fills (≥5.9:1). */
+          ink: role("ai-ink"),
         },
         positive: {
           DEFAULT: role("positive"),

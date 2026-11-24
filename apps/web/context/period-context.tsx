@@ -1,12 +1,10 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { toDateInputValue } from "@/lib/format";
+import { currentPeriod, periodRange, shiftPeriod, type Period } from "@/lib/period";
 
-export interface Period {
-  month: number; // 1-12
-  year: number;
-}
+export type { Period };
+export { shiftPeriod };
 
 interface PeriodContextValue extends Period {
   setPeriod: (p: Period) => void;
@@ -20,15 +18,7 @@ interface PeriodContextValue extends Period {
 }
 
 const KEY = "fintrack-period";
-const now = () => {
-  const d = new Date();
-  return { month: d.getMonth() + 1, year: d.getFullYear() };
-};
-
-export function shiftPeriod(p: Period, delta: number): Period {
-  const d = new Date(p.year, p.month - 1 + delta, 1);
-  return { month: d.getMonth() + 1, year: d.getFullYear() };
-}
+const now = () => currentPeriod();
 
 const PeriodContext = createContext<PeriodContextValue | null>(null);
 
@@ -61,8 +51,6 @@ export function PeriodProvider({ children }: { children: React.ReactNode }) {
     const current = now();
     const isCurrent = period.month === current.month && period.year === current.year;
     const isFuture = period.year > current.year || (period.year === current.year && period.month > current.month);
-    const start = new Date(period.year, period.month - 1, 1);
-    const end = new Date(period.year, period.month, 0);
     return {
       ...period,
       setPeriod,
@@ -71,7 +59,7 @@ export function PeriodProvider({ children }: { children: React.ReactNode }) {
       isCurrent,
       isFuture,
       previous: shiftPeriod(period, -1),
-      range: { startDate: toDateInputValue(start), endDate: toDateInputValue(end) },
+      range: periodRange(period),
     };
   }, [period, setPeriod]);
 

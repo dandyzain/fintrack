@@ -9,7 +9,7 @@ import { localizeCategoryName, localizeTransactionNote, localizeWalletName } fro
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Money } from "@/components/ui/money";
-import { Badge } from "@/components/ui/badge";
+import { Badge, ColorDot } from "@/components/ui/badge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CategoryBubble } from "./category-icon";
 
@@ -31,6 +31,7 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
   const title = tx.merchantName || (isIncome ? t.detail.income : t.detail.expense);
   const note = localizeTransactionNote(tx.notes, language);
   const category = tx.category ? localizeCategoryName(tx.category.name, language) : null;
+  const walletName = localizeWalletName(tx.wallet?.name, language);
 
   return (
     <div
@@ -51,22 +52,43 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-semibold text-fg">{title}</p>
           {tx.receiptImageUrl && (
-            <Badge tone="ai" className="hidden px-1.5 py-0 sm:inline-flex">
-              <Receipt aria-hidden />
-              <span className="sr-only sm:not-sr-only">{t.transactions.receipt}</span>
-            </Badge>
+            <>
+              <Badge tone="ai" className="hidden px-1.5 py-0 sm:inline-flex">
+                <Receipt aria-hidden />
+                {t.transactions.receipt}
+              </Badge>
+              <Receipt className="size-3.5 shrink-0 text-ai-fg sm:hidden" aria-label={t.transactions.receipt} role="img" />
+            </>
           )}
         </div>
-        <p className="mt-0.5 truncate text-xs text-fg-subtle">
+        {/* Compact meta line; on wide containers category & pocket move into their own columns */}
+        <p className="mt-0.5 truncate text-xs text-fg-subtle @3xl:hidden">
           {[
             showDate ? formatDate(tx.date, language, "short") : null,
             category ?? (isIncome ? null : t.transactions.uncategorized),
-            localizeWalletName(tx.wallet?.name, language),
+            walletName,
             note || null,
           ]
             .filter(Boolean)
             .join(" · ")}
         </p>
+        <p className="mt-0.5 hidden truncate text-xs text-fg-subtle @3xl:block">
+          {[showDate ? formatDate(tx.date, language, "short") : null, note || null].filter(Boolean).join(" · ") || "\u00A0"}
+        </p>
+      </div>
+
+      <div className="pointer-events-none relative hidden w-44 shrink-0 @3xl:block">
+        {category ? (
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-surface-2/60 px-2.5 py-1 text-xs font-medium text-fg-muted">
+            <ColorDot color={tx.category?.color} className="ring-0" />
+            <span className="truncate">{category}</span>
+          </span>
+        ) : (
+          <span className="text-xs text-fg-subtle">{isIncome ? "—" : t.transactions.uncategorized}</span>
+        )}
+      </div>
+      <div className="pointer-events-none relative hidden w-36 shrink-0 truncate text-sm text-fg-muted @3xl:block">
+        {walletName}
       </div>
 
       <div className="relative z-10 flex items-center gap-1">
@@ -76,7 +98,7 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
               type="button"
               onClick={() => openReceipt(tx.receiptImageUrl as string)}
               aria-label={t.transactions.viewReceipt}
-              className="grid size-9 place-items-center rounded-lg text-ai-fg transition hover:bg-ai/10 focus-visible:opacity-100 fine:sm:opacity-0 fine:sm:group-hover:opacity-100 coarse:size-10"
+              className="hidden size-9 place-items-center rounded-lg text-ai-fg transition hover:bg-ai/10 focus-visible:opacity-100 sm:grid fine:sm:opacity-0 fine:sm:group-hover:opacity-100 coarse:size-10"
             >
               <Receipt className="size-4" aria-hidden />
             </button>

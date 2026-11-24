@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, Inbox, Loader2, Plus, SearchX } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { Money } from "@/components/ui/money";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { TransactionRow } from "./transaction-row";
 import { DEFAULT_FILTERS, FilterBar, isFiltered, type LedgerFilters } from "./filter-bar";
 
@@ -33,9 +33,15 @@ function csvEscape(v: unknown) {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export function TransactionsPage() {
+export interface TransactionsPageProps {
+  initialWalletId?: string;
+  initialCategoryId?: string;
+  focusSearch?: boolean;
+}
+
+export function TransactionsPage({ initialWalletId = "", initialCategoryId = "", focusSearch = false }: TransactionsPageProps) {
   const { t, language } = useLanguage();
-  const params = useSearchParams();
+  const mounted = useMounted();
   const period = usePeriod();
   const reduce = useReducedMotion();
   const { openEntry } = useAppActions();
@@ -45,15 +51,24 @@ export function TransactionsPage() {
 
   const [filters, setFilters] = React.useState<LedgerFilters>(() => ({
     ...DEFAULT_FILTERS,
-    walletId: params.get("walletId") ?? "",
-    categoryId: params.get("categoryId") ?? "",
+    walletId: initialWalletId,
+    categoryId: initialCategoryId,
   }));
   const [exporting, setExporting] = React.useState(false);
   const search = useDebounced(filters.search, 250);
 
   React.useEffect(() => {
-    if (params.get("focus") === "search") document.getElementById("tx-search")?.focus();
-  }, [params]);
+    if (focusSearch) document.getElementById("tx-search")?.focus();
+  }, [focusSearch]);
+
+  // Follow URL changes (e.g. arriving from a pocket card or the category donut).
+  React.useEffect(() => {
+    setFilters((f) =>
+      f.walletId === initialWalletId && f.categoryId === initialCategoryId
+        ? f
+        : { ...f, walletId: initialWalletId, categoryId: initialCategoryId }
+    );
+  }, [initialWalletId, initialCategoryId]);
 
   const query = React.useMemo<TransactionQuery>(() => {
     const dates =
@@ -159,7 +174,7 @@ export function TransactionsPage() {
     }
   };
 
-  const periodLabel = formatMonth(period.month, period.year, language);
+  const periodLabel = mounted ? formatMonth(period.month, period.year, language) : "";
   const filtered = isFiltered(filters) || Boolean(search);
 
   return (

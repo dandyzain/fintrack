@@ -56,7 +56,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
             onClick={openScanner}
             aria-label={rail ? t.nav.scan : undefined}
             className={cn(
-              "group relative flex h-11 w-full items-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-br from-ai to-[rgb(14_165_233)] font-semibold text-white shadow-glow-ai transition active:scale-[0.97]",
+              "group relative flex h-11 w-full items-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-br from-ai to-[#38BDF8] font-semibold text-ai-ink shadow-glow-ai transition active:scale-[0.97]",
               rail ? "justify-center" : "px-3.5"
             )}
           >

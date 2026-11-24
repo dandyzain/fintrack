@@ -293,7 +293,7 @@ export function ScannerModal({ open, onOpenChange }: { open: boolean; onOpenChan
       title={step === "review" ? t.scanner.reviewTitle : t.scanner.title}
       description={step === "review" ? t.scanner.reviewSubtitle : t.scanner.subtitle}
       icon={
-        <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-ai to-[rgb(14_165_233)] text-white shadow-glow-ai">
+        <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-ai to-[#38BDF8] text-ai-ink shadow-glow-ai">
           <ScanLine className="size-5" />
         </span>
       }
@@ -316,7 +316,7 @@ export function ScannerModal({ open, onOpenChange }: { open: boolean; onOpenChan
                   <span
                     className={cn(
                       "grid size-5 place-items-center rounded-full text-[0.75rem]",
-                      i < stepIndex ? "bg-ai text-white" : i === stepIndex ? "bg-ai/15 ring-1 ring-ai/50" : "bg-surface-2"
+                      i < stepIndex ? "bg-ai text-ai-ink" : i === stepIndex ? "bg-ai/15 ring-1 ring-ai/50" : "bg-surface-2"
                     )}
                   >
                     {i < stepIndex ? <Check className="size-3" aria-hidden /> : i + 1}

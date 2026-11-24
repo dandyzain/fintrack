@@ -185,7 +185,7 @@ export function FilterBar({ filters, onChange, onReset, wallets, categories, per
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-fg-subtle" aria-hidden />
           <Input
@@ -214,7 +214,7 @@ export function FilterBar({ filters, onChange, onReset, wallets, categories, per
             label={t.transactions.filters}
             value={filters.type}
             onChange={(v) => onChange({ type: v })}
-            className="flex-1 md:flex-none"
+            className="flex-1 lg:flex-none"
             options={[
               { value: "ALL", label: t.transactions.typeAll },
               { value: "EXPENSE", label: t.transactions.typeExpense },
@@ -229,7 +229,7 @@ export function FilterBar({ filters, onChange, onReset, wallets, categories, per
             className="relative"
           >
             <SlidersHorizontal aria-hidden />
-            <span className="hidden sm:inline">{t.transactions.filters}</span>
+            <span className="sr-only sm:not-sr-only">{t.transactions.filters}</span>
             {advancedCount > 0 && (
               <span className="tabular grid size-5 place-items-center rounded-full bg-brand text-[0.75rem] font-bold text-white">
                 {advancedCount}

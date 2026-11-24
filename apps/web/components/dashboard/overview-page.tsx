@@ -11,10 +11,13 @@ import { useAppActions } from "@/context/app-actions-context";
 import { useAnalytics, useCategories, useMe, useRecentTransactions, useWallets, useDeleteTransactionWithUndo } from "@/lib/api/queries";
 import { fmt } from "@/lib/i18n/translations";
 import { formatMonth, toNumber } from "@/lib/format";
+import { useMounted } from "@/lib/hooks/use-mounted";
+import { recentQuery } from "@/lib/period";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { RevealItem, Stagger, InView } from "@/components/motion/reveal";
+import { LazyMount } from "@/components/motion/lazy-mount";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import { BalanceHero } from "./balance-hero";
 import { HealthCard } from "./health-card";
@@ -32,13 +35,6 @@ const CategoryDonut = dynamic(() => import("./charts").then((m) => m.CategoryDon
   loading: () => <Skeleton className="h-44 w-full rounded-2xl" />,
 });
 
-function greeting(t: ReturnType<typeof useLanguage>["t"]) {
-  const h = new Date().getHours();
-  if (h < 11) return t.overview.greetingMorning;
-  if (h < 18) return t.overview.greetingAfternoon;
-  return t.overview.greetingEvening;
-}
-
 export function OverviewPage() {
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -49,14 +45,16 @@ export function OverviewPage() {
   const categories = useCategories();
   const analytics = useAnalytics(period);
   const previous = useAnalytics(period.previous);
-  const recent = useRecentTransactions({ ...period.range, limit: 6, sortBy: "date_desc" });
+  const recent = useRecentTransactions(recentQuery(period));
   const deleteTx = useDeleteTransactionWithUndo();
 
   const totalBalance = useMemo(
     () => (wallets.data ?? []).reduce((s, w) => s + toNumber(w.balance), 0),
     [wallets.data]
   );
-  const monthLabel = formatMonth(period.month, period.year, language);
+  const mounted = useMounted();
+  // Clock-dependent text renders after mount so prerendered HTML never mismatches.
+  const monthLabel = mounted ? formatMonth(period.month, period.year, language) : "";
   const firstName = me.data?.name.split(" ")[0] ?? "";
   const a = analytics.data;
   const isEmptyMonth = a && a.summary.totalIncome === 0 && a.summary.totalExpense === 0;
@@ -65,14 +63,16 @@ export function OverviewPage() {
   return (
     <Stagger className="space-y-6 pb-4 sm:space-y-8">
       <RevealItem className="flex flex-col gap-1 pt-2">
-        <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
-          {greeting(t)}
+        <h1 className="min-h-[2.25rem] text-2xl font-bold tracking-tight text-fg sm:min-h-[2.5rem] sm:text-3xl">
+          {t.overview.welcome}
           {firstName ? `, ${firstName}` : ""}
         </h1>
-        <p className="text-sm text-fg-subtle sm:text-base">{fmt(t.overview.subtitle, { month: monthLabel })}</p>
+        <p className="min-h-[1.5rem] text-sm text-fg-subtle sm:text-base">
+          {mounted ? fmt(t.overview.subtitle, { month: monthLabel }) : "\u00A0"}
+        </p>
       </RevealItem>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         <RevealItem className="lg:col-span-8">
           <BalanceHero
             totalBalance={totalBalance}
@@ -101,7 +101,7 @@ export function OverviewPage() {
         <InsightsRow analytics={a} previous={previous.data} loading={analytics.isPending} />
       </InView>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         <InView className="lg:col-span-8">
           <Card as="section" aria-labelledby="cashflow-heading" className="h-full p-5 sm:p-6">
             <CardHeader
@@ -124,7 +124,9 @@ export function OverviewPage() {
               {analytics.isPending ? (
                 <Skeleton className="h-60 w-full rounded-2xl sm:h-72" />
               ) : a?.dailyTrends?.some((d) => d.expenseAmount || d.incomeAmount) ? (
-                <CashflowChart data={a.dailyTrends} />
+                <LazyMount fallback={<Skeleton className="h-60 w-full rounded-2xl sm:h-72" />}>
+                  <CashflowChart data={a.dailyTrends} />
+                </LazyMount>
               ) : (
                 <EmptyState compact icon={<Activity />} title={t.overview.cashflow.empty} />
               )}
@@ -144,6 +146,7 @@ export function OverviewPage() {
               {analytics.isPending ? (
                 <Skeleton className="h-44 w-full rounded-2xl" />
               ) : a?.categoryBreakdown?.length ? (
+                <LazyMount fallback={<Skeleton className="h-44 w-full rounded-2xl" />}>
                 <CategoryDonut
                   data={a.categoryBreakdown}
                   total={a.summary.totalExpense}
@@ -151,6 +154,7 @@ export function OverviewPage() {
                     if (knownCategories.has(id)) router.push(`/transactions?categoryId=${encodeURIComponent(id)}`);
                   }}
                 />
+                </LazyMount>
               ) : (
                 <EmptyState compact icon={<PieChart />} title={t.overview.categories.empty} />
               )}
@@ -159,9 +163,9 @@ export function OverviewPage() {
         </InView>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         <InView className="lg:col-span-7 xl:col-span-8">
-          <Card as="section" aria-labelledby="recent-heading" className="h-full p-3 sm:p-4">
+          <Card as="section" aria-labelledby="recent-heading" className="@container h-full p-3 sm:p-4">
             <CardHeader
               id="recent-heading"
               className="px-2 pt-2 sm:px-2"

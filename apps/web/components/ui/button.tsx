@@ -19,11 +19,11 @@ export const buttonVariants = cva(
       variant: {
         primary:
           "bg-brand text-brand-contrast shadow-[inset_0_1px_0_rgb(255_255_255/0.18)] hover:shadow-glow-brand hover:brightness-110",
-        ai: "bg-gradient-to-br from-ai to-[rgb(14_165_233)] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] hover:shadow-glow-ai hover:brightness-105",
+        ai: "bg-gradient-to-br from-ai to-[#38BDF8] text-ai-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] hover:shadow-glow-ai hover:brightness-105",
         secondary: "bg-surface-2 text-fg hover:bg-surface-3",
         outline: "border border-line bg-surface-1 text-fg hover:border-line-strong hover:bg-surface-2",
         ghost: "text-fg-muted hover:bg-surface-2 hover:text-fg",
-        danger: "bg-negative text-white hover:brightness-110",
+        danger: "bg-[#E11D48] text-white hover:bg-[#BE123C]",
         "danger-ghost": "text-negative-fg hover:bg-negative/10",
         link: "h-auto px-0 text-brand-fg underline-offset-4 hover:underline active:scale-100",
       },

@@ -142,8 +142,10 @@ export function CategoryDonut({
   const focus = active !== null ? data[active] : null;
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
-      <div className="relative size-44 shrink-0">
+    <div className="@container">
+    <div className="flex flex-col items-center gap-5 @md:flex-row @md:items-center">
+      {/* Decorative: the legend list next to it carries the same data accessibly */}
+      <div className="relative size-44 shrink-0" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -155,6 +157,7 @@ export function CategoryDonut({
               paddingAngle={data.length > 1 ? 2.5 : 0}
               cornerRadius={6}
               stroke="none"
+              rootTabIndex={-1}
               isAnimationActive={!reduce}
               animationDuration={800}
               onMouseEnter={(_, i) => setActive(i)}
@@ -215,6 +218,7 @@ export function CategoryDonut({
           </li>
         ))}
       </ul>
+    </div>
     </div>
   );
 }

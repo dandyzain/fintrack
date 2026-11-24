@@ -60,7 +60,7 @@ export function BalanceHero({ totalBalance, walletCount, current, previous, load
   return (
     <section
       aria-labelledby="balance-heading"
-      className="grain relative isolate overflow-hidden rounded-[1.75rem] border border-line bg-surface-1 p-5 shadow-elev-2 sm:p-7"
+      className="relative isolate overflow-hidden rounded-[1.75rem] border border-line bg-surface-1 p-5 shadow-elev-2 sm:p-7"
     >
       <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
         <div className="aurora animate-aurora-drift" />
@@ -83,11 +83,11 @@ export function BalanceHero({ totalBalance, walletCount, current, previous, load
         </div>
       </div>
 
-      <dl className="mt-7 grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-3 sm:gap-3">
+      <dl className="mt-6 grid grid-cols-1 gap-2 sm:mt-7 sm:grid-cols-3 sm:gap-3">
         {stats.map((st) => (
           <div
             key={st.key}
-            className="rounded-2xl border border-line/80 bg-surface-1/70 p-3.5 backdrop-blur-sm sm:p-4"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-line/80 bg-surface-1/70 px-3.5 py-3 backdrop-blur-sm sm:block sm:p-4"
           >
             <dt className="flex items-center gap-2 text-xs font-medium text-fg-muted">
               <span aria-hidden className={cn("grid size-6 place-items-center rounded-lg", st.iconClass)}>
@@ -95,19 +95,19 @@ export function BalanceHero({ totalBalance, walletCount, current, previous, load
               </span>
               {st.label}
             </dt>
-            <dd className="mt-2">
+            <dd className="text-right sm:mt-2 sm:text-left">
               {loading ? (
-                <Skeleton className="h-6 w-28" />
+                <Skeleton className="ml-auto h-6 w-28 sm:ml-0" />
               ) : (
                 <Money
                   value={st.value}
                   tone={st.key === "net" && st.value < 0 ? "negative" : "neutral"}
-                  className="text-lg font-bold tracking-tight sm:text-xl"
+                  className="text-base font-bold tracking-tight sm:text-xl"
                 />
               )}
-            </dd>
-            <dd className={cn("mt-1.5", hidden && "invisible")}>
-              {!loading && <DeltaChip change={st.change} goodWhen={st.goodWhen} />}
+              <div className={cn("mt-1 sm:mt-1.5", hidden && "invisible")}>
+                {!loading && <DeltaChip change={st.change} goodWhen={st.goodWhen} />}
+              </div>
             </dd>
           </div>
         ))}

@@ -68,9 +68,7 @@ export const translations = {
       current: "Back to this month",
     },
     overview: {
-      greetingMorning: "Good morning",
-      greetingAfternoon: "Good afternoon",
-      greetingEvening: "Good evening",
+      welcome: "Welcome back",
       subtitle: "Here's where your money stands for {month}.",
       totalBalance: "Total balance",
       acrossPockets: "Across {count} pockets",
@@ -467,9 +465,7 @@ export const translations = {
       current: "Kembali ke bulan ini",
     },
     overview: {
-      greetingMorning: "Selamat pagi",
-      greetingAfternoon: "Selamat siang",
-      greetingEvening: "Selamat malam",
+      welcome: "Selamat datang kembali",
       subtitle: "Begini posisi keuanganmu untuk {month}.",
       totalBalance: "Total saldo",
       acrossPockets: "Di {count} kantong",

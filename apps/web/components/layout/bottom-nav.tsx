@@ -63,7 +63,7 @@ export function BottomNav() {
             type="button"
             onClick={openScanner}
             aria-label={t.nav.scan}
-            className="relative -mt-5 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-ai to-[rgb(14_165_233)] text-white shadow-glow-ai ring-4 ring-bg transition active:scale-95"
+            className="relative -mt-5 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-ai to-[#38BDF8] text-ai-ink shadow-glow-ai ring-4 ring-bg transition active:scale-95"
           >
             <span aria-hidden style={{ animationIterationCount: 3 }} className="absolute inset-0 rounded-2xl bg-ai/40 animate-pulse-ring motion-reduce:hidden" />
             <ScanLine className="relative size-6" aria-hidden />

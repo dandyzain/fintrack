@@ -12,6 +12,7 @@ export function PeriodSwitcher({ className }: { className?: string }) {
   const { month, year, shift, reset, isCurrent } = usePeriod();
   const { t, language } = useLanguage();
   const label = formatMonth(month, year, language);
+  const shortLabel = formatMonth(month, year, language, "short");
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
@@ -28,8 +29,8 @@ export function PeriodSwitcher({ className }: { className?: string }) {
         >
           <ChevronLeft className="size-4" aria-hidden />
         </button>
-        <div aria-live="polite" aria-atomic="true" className="relative flex min-w-[9.5rem] items-center justify-center gap-1.5 overflow-hidden px-1 sm:min-w-[10.5rem]">
-          <CalendarDays className="size-4 shrink-0 text-brand-fg" aria-hidden />
+        <div aria-live="polite" aria-atomic="true" className="relative flex min-w-[6.75rem] items-center justify-center gap-1.5 overflow-hidden px-1 sm:min-w-[10.5rem]">
+          <CalendarDays className="hidden size-4 shrink-0 text-brand-fg min-[400px]:block" aria-hidden />
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={label}
@@ -39,7 +40,8 @@ export function PeriodSwitcher({ className }: { className?: string }) {
               transition={{ duration: 0.18 }}
               className="whitespace-nowrap text-sm font-semibold capitalize text-fg"
             >
-              {label}
+              <span className="sm:hidden">{shortLabel}</span>
+              <span className="hidden sm:inline">{label}</span>
             </motion.span>
           </AnimatePresence>
         </div>

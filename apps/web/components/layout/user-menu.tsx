@@ -39,13 +39,13 @@ export function UserMenu({ user }: { user: AuthUser }) {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           ref={triggerRef}
           type="button"
-          aria-label={t.nav.account}
-          className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-brand to-ai text-sm font-bold text-white shadow-elev-1 ring-2 ring-surface-1 transition hover:brightness-110 active:scale-95 coarse:size-11"
+          aria-label={`${initials(user.name)} · ${t.nav.account}`}
+          className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-brand to-[#1D4ED8] text-sm font-bold text-white shadow-elev-1 ring-2 ring-surface-1 transition hover:brightness-110 active:scale-95 coarse:size-11"
         >
           {initials(user.name)}
         </button>
@@ -54,7 +54,7 @@ export function UserMenu({ user }: { user: AuthUser }) {
         <div className="flex items-center gap-3 px-2.5 pb-2 pt-1.5">
           <span
             aria-hidden
-            className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand to-ai text-sm font-bold text-white"
+            className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand to-[#1D4ED8] text-sm font-bold text-white"
           >
             {initials(user.name)}
           </span>

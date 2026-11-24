@@ -145,14 +145,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-[26rem]"
-          >
-            {children}
-          </motion.div>
+          <div className="enter-rise w-full max-w-[26rem]">{children}</div>
         </main>
       </div>
     </div>

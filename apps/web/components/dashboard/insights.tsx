@@ -113,7 +113,10 @@ export function InsightsRow({
         </p>
       )}
 
-      <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+      <ul
+        tabIndex={0}
+        aria-labelledby="insights-heading"
+        className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         {tiles.map((tile) => (
           <li key={tile.key} className="w-[72%] shrink-0 snap-start min-[480px]:w-[46%] sm:w-auto">
             <Card spotlight className="h-full p-4 sm:p-5">

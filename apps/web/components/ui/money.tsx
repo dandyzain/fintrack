@@ -5,6 +5,7 @@ import { animate, useInView, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { formatIDR, toNumber, type MoneyOptions } from "@/lib/format";
 import { usePrivacy } from "@/context/privacy-context";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { useLanguage } from "@/context/language-context";
 
 type Tone = "auto" | "positive" | "negative" | "neutral" | "inherit";
@@ -46,18 +47,39 @@ export function Money({
   const ref = React.useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const reduce = useReducedMotion();
-  const [display, setDisplay] = React.useState(animateOnView && !reduce ? 0 : signed);
+  const countFrom = (v: number) => {
+    const abs = Math.abs(Math.round(v));
+    if (abs < 10) return v;
+    const floor = 10 ** (String(abs).length - 1);
+    return Math.sign(v) * floor;
+  };
+  // Values that arrive in server HTML show their real amount immediately (a
+  // finance app must never flash a placeholder number); only values that load
+  // on the client count up. Later changes animate from the previous value.
+  const mounted = useMounted();
+  const mountedAtFirstRender = React.useRef(mounted).current;
+  const countUp = animateOnView && !reduce && mountedAtFirstRender;
+  const [display, setDisplay] = React.useState(countUp ? countFrom(signed) : signed);
+  const lastShown = React.useRef<number | null>(countUp ? null : signed);
 
   React.useEffect(() => {
     if (!animateOnView || reduce) {
+      lastShown.current = signed;
       setDisplay(signed);
       return;
     }
-    if (!inView) return;
-    const controls = animate(display, signed, {
-      duration: 1.1,
+    if (!inView || lastShown.current === signed) return;
+    const from = lastShown.current ?? countFrom(signed);
+    const controls = animate(from, signed, {
+      duration: lastShown.current === null ? 1.1 : 0.6,
       ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => setDisplay(v),
+      onUpdate: (v) => {
+        lastShown.current = v;
+        setDisplay(v);
+      },
+      onComplete: () => {
+        lastShown.current = signed;
+      },
     });
     return () => controls.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -99,7 +99,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
           tabIndex={-1}
           className="mx-auto max-w-[1440px] px-4 pb-[calc(var(--bottom-nav-h)+2.5rem)] pt-2 focus:outline-none sm:px-6 lg:px-8"
         >
-          {me.data ? children : <PageSkeleton />}
+          {children}
         </main>
       </div>
 

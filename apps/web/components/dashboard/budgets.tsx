@@ -8,6 +8,7 @@ import { usePeriod } from "@/context/period-context";
 import { usePrivacy } from "@/context/privacy-context";
 import { fmt, localizeCategoryName } from "@/lib/i18n/translations";
 import { formatIDR, formatMonth } from "@/lib/format";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -19,6 +20,7 @@ export function BudgetsCard({ items, loading }: { items?: CategoryBudgetComparis
   const { month, year } = usePeriod();
   const { hidden } = usePrivacy();
   const reduce = useReducedMotion();
+  const mounted = useMounted();
 
   return (
     <Card as="section" aria-labelledby="budgets-heading" className="h-full p-5 sm:p-6">
@@ -26,7 +28,7 @@ export function BudgetsCard({ items, loading }: { items?: CategoryBudgetComparis
         id="budgets-heading"
         icon={<Target />}
         title={t.overview.budgets.title}
-        description={fmt(t.overview.budgets.subtitle, { month: formatMonth(month, year, language) })}
+        description={mounted ? fmt(t.overview.budgets.subtitle, { month: formatMonth(month, year, language) }) : "\u00A0"}
       />
       <div className="mt-5">
         {loading ? (
