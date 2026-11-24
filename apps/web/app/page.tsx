@@ -25,6 +25,7 @@ import {
   Cpu,
   Layers,
   ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { BudgetProgressCard } from "@/components/charts/budget-progress-card";
@@ -68,6 +69,57 @@ interface TransactionItem {
   category: { name: string; color: string } | null;
 }
 
+interface ApiBody {
+  success?: boolean;
+  data?: any;
+  error?: unknown;
+}
+
+/** `status` is 0 when no response arrived at all (offline, DNS, connection refused). */
+interface ApiResult {
+  status: number;
+  body: ApiBody | null;
+}
+
+/** A failed dashboard request. Without an API message, a localized fallback is shown. */
+interface LoadError {
+  apiMessage: string | null;
+  offline: boolean;
+}
+
+type LoadSource = "auth" | "analytics" | "wallets" | "categories" | "transactions";
+
+/** Never throws: network failures and non-JSON bodies (e.g. a proxy's HTML 502 page) come back as data. */
+async function getJson(url: string): Promise<ApiResult> {
+  try {
+    const res = await fetch(url);
+    const body: ApiBody | null = await res.json().catch(() => null);
+    return { status: res.status, body };
+  } catch {
+    return { status: 0, body: null };
+  }
+}
+
+function isSuccessStatus(status: number): boolean {
+  return status >= 200 && status < 300;
+}
+
+function toLoadError({ status, body }: ApiResult): LoadError {
+  const apiMessage =
+    typeof body?.error === "string" && body.error.trim() ? body.error : null;
+  return { apiMessage, offline: status === 0 };
+}
+
+/**
+ * Clears the session cookie, then goes to /login. The middleware only checks
+ * that the cookie looks like a JWT and sends anyone holding one from /login back
+ * to /, so a rejected cookie left in place would loop between the two pages.
+ */
+async function redirectToLogin() {
+  await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+  window.location.replace("/login");
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { t, language } = useLanguage();
@@ -79,6 +131,19 @@ export default function DashboardPage() {
   const [wallets, setWallets] = useState<WalletItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Failed requests by source. Each source clears its own entry on its next
+  // success, so a working transactions reload doesn't hide a failed analytics load.
+  const [loadErrors, setLoadErrors] = useState<Partial<Record<LoadSource, LoadError>>>({});
+
+  const setLoadError = useCallback((source: LoadSource, error: LoadError | null) => {
+    setLoadErrors((prev) => {
+      if (error) return { ...prev, [source]: error };
+      if (!(source in prev)) return prev;
+      const next = { ...prev };
+      delete next[source];
+      return next;
+    });
+  }, []);
 
   // Filter State for Transactions
   const [filters, setFilters] = useState<TransactionFilterState>({
@@ -128,66 +193,84 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchFilteredTransactions = useCallback(async (currentFilters: TransactionFilterState) => {
-    try {
-      const searchParams = new URLSearchParams();
-      searchParams.append("limit", "50");
-      if (currentFilters.search.trim()) searchParams.append("search", currentFilters.search.trim());
-      if (currentFilters.type !== "ALL") searchParams.append("type", currentFilters.type);
-      if (currentFilters.walletId) searchParams.append("walletId", currentFilters.walletId);
-      if (currentFilters.categoryId) searchParams.append("categoryId", currentFilters.categoryId);
-      if (currentFilters.hasReceiptOnly) searchParams.append("hasReceipt", "true");
-      if (currentFilters.sortBy) searchParams.append("sortBy", currentFilters.sortBy);
-
-      const res = await fetch(`/api/transactions?${searchParams.toString()}`);
-      const json = await res.json();
-      if (json.success && json.data?.items) {
-        setTransactions(json.data.items);
+  /**
+   * Loads one dashboard data endpoint and returns its `data`, or null on
+   * failure. A 401 sends the user to sign in again; any other failure is
+   * recorded for the error banner and the previously loaded data stays on screen.
+   */
+  const loadResource = useCallback(
+    async <T,>(source: LoadSource, url: string): Promise<T | null> => {
+      const result = await getJson(url);
+      if (result.status === 401) {
+        await redirectToLogin();
+        return null;
       }
-    } catch (err) {
-      console.error("Failed to load transactions with filters:", err);
+      if (isSuccessStatus(result.status) && result.body?.success) {
+        setLoadError(source, null);
+        return result.body.data as T;
+      }
+      console.error(`Failed to load ${url} (HTTP ${result.status || "network error"}):`, result.body);
+      setLoadError(source, toLoadError(result));
+      return null;
+    },
+    [setLoadError]
+  );
+
+  const fetchFilteredTransactions = useCallback(async (currentFilters: TransactionFilterState) => {
+    const searchParams = new URLSearchParams();
+    searchParams.append("limit", "50");
+    if (currentFilters.search.trim()) searchParams.append("search", currentFilters.search.trim());
+    if (currentFilters.type !== "ALL") searchParams.append("type", currentFilters.type);
+    if (currentFilters.walletId) searchParams.append("walletId", currentFilters.walletId);
+    if (currentFilters.categoryId) searchParams.append("categoryId", currentFilters.categoryId);
+    if (currentFilters.hasReceiptOnly) searchParams.append("hasReceipt", "true");
+    if (currentFilters.sortBy) searchParams.append("sortBy", currentFilters.sortBy);
+
+    const data = await loadResource<{ items?: TransactionItem[] }>(
+      "transactions",
+      `/api/transactions?${searchParams.toString()}`
+    );
+    if (data?.items) {
+      setTransactions(data.items);
     }
-  }, []);
+  }, [loadResource]);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // 1. Verify Authentication
-      const meRes = await fetch("/api/auth/me");
-      if (meRes.status === 401) {
-        window.location.replace("/login");
+      // 1. Verify the session. Only a 401, or a 2xx without a user, means the
+      // user has to sign in again. Anything else (e.g. a 503 while the database
+      // is down) is a server problem: redirecting to /login would bounce
+      // straight back here and loop, so show an error with a retry instead.
+      const me = await getJson("/api/auth/me");
+      const user: AuthUser | undefined = me.body?.success ? me.body.data?.user : undefined;
+      if (me.status === 401 || (isSuccessStatus(me.status) && me.body && !user)) {
+        await redirectToLogin();
         return;
       }
-      const meJson = await meRes.json();
-      if (!meJson.success || !meJson.data?.user) {
-        window.location.replace("/login");
+      if (!user) {
+        console.error(`Failed to verify session (HTTP ${me.status || "network error"}):`, me.body);
+        setLoadError("auth", toLoadError(me));
         return;
       }
-      setCurrentUser(meJson.data.user);
+      setLoadError("auth", null);
+      setCurrentUser(user);
 
-      const [analyticsRes, walletsRes, categoriesRes] = await Promise.all([
-        fetch("/api/analytics"),
-        fetch("/api/wallets"),
-        fetch("/api/categories"),
+      const [analyticsData, walletsData, categoriesData] = await Promise.all([
+        loadResource<DashboardAnalyticsResponse>("analytics", "/api/analytics"),
+        loadResource<WalletItem[]>("wallets", "/api/wallets"),
+        loadResource<CategoryItem[]>("categories", "/api/categories"),
       ]);
 
-      const [analyticsJson, walletsJson, categoriesJson] = await Promise.all([
-        analyticsRes.json(),
-        walletsRes.json(),
-        categoriesRes.json(),
-      ]);
-
-      if (analyticsJson.success) setAnalytics(analyticsJson.data);
-      if (walletsJson.success) setWallets(walletsJson.data);
-      if (categoriesJson.success) setCategories(categoriesJson.data);
+      if (analyticsData) setAnalytics(analyticsData);
+      if (walletsData) setWallets(walletsData);
+      if (categoriesData) setCategories(categoriesData);
 
       await fetchFilteredTransactions(filters);
-    } catch (err) {
-      console.error("Failed to load dashboard data:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [router, filters, fetchFilteredTransactions]);
+  }, [router, filters, fetchFilteredTransactions, loadResource, setLoadError]);
 
   useEffect(() => {
     fetchData();
@@ -270,6 +353,61 @@ export default function DashboardPage() {
     "virtual-card-emerald",
     "virtual-card-indigo",
   ];
+
+  const describeLoadError = (error: LoadError) =>
+    error.apiMessage ??
+    (error.offline ? t.dashboard.networkErrorFallback : t.dashboard.serverErrorFallback);
+
+  // Unique messages, since an outage usually fails every request the same way.
+  const loadErrorMessages = Array.from(
+    new Set(
+      Object.values(loadErrors)
+        .filter((error): error is LoadError => Boolean(error))
+        .map(describeLoadError)
+    )
+  );
+
+  // The session couldn't be verified (server error, not a 401), so there is no
+  // user to render the dashboard for.
+  if (!isLoading && !currentUser && loadErrors.auth) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#F8FAFC] dark:bg-[#090D16] text-slate-900 dark:text-white relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-40 left-1/4 w-96 h-96 bg-violet-600/10 dark:bg-violet-600/15 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute top-40 right-10 w-96 h-96 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-full blur-3xl" />
+        <div
+          role="alert"
+          className="relative w-full max-w-md bento-card p-6 sm:p-8 rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-xl text-center"
+        >
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+            {t.dashboard.loadErrorTitle}
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 break-words">
+            {describeLoadError(loadErrors.auth)}
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5">
+            <button
+              onClick={fetchData}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white glow-btn-violet rounded-xl transition shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>{t.common.retry}</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-[#121826]/80 hover:bg-slate-50 dark:hover:bg-[#1B2337] border border-slate-200/80 dark:border-white/10 rounded-xl transition shadow-sm disabled:opacity-60"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>{t.nav.logout}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || !currentUser) {
     return (
@@ -404,6 +542,34 @@ export default function DashboardPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7 space-y-5 sm:space-y-6">
+        {/* Failed data loads: previously loaded data stays on screen, so say it may be stale */}
+        {loadErrorMessages.length > 0 && (
+          <div
+            role="alert"
+            className="p-3 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex flex-col sm:flex-row sm:items-center gap-3"
+          >
+            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500 mt-0.5" />
+              <div className="min-w-0">
+                <p className="font-bold">{t.dashboard.partialLoadError}</p>
+                {loadErrorMessages.map((message) => (
+                  <p key={message} className="mt-0.5 break-words">
+                    {message}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={fetchData}
+              disabled={isLoading}
+              className="self-start sm:self-auto flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-xl bg-white dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-sm whitespace-nowrap"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>{t.common.retry}</span>
+            </button>
+          </div>
+        )}
+
         {/* Header Title & Period */}
         <div className="flex items-center justify-between gap-3">
           <div>
