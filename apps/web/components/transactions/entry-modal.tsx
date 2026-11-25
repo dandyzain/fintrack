@@ -37,7 +37,8 @@ export function EntryModal({ open, onOpenChange }: { open: boolean; onOpenChange
 
   React.useEffect(() => {
     if (open && !values.walletId && wallets.data?.length) {
-      setValues((v) => ({ ...v, walletId: defaultFormValues(wallets.data).walletId }));
+      const d = defaultFormValues(wallets.data);
+      setValues((v) => ({ ...v, walletId: d.walletId, toWalletId: v.toWalletId || d.toWalletId }));
     }
   }, [open, wallets.data, values.walletId]);
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, HeartPulse, ScanLine, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, HeartPulse, ScanLine, Wallet } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +19,8 @@ export default function DemoPage() {
     setErrorMsg(null);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: "dandy@example.com",
-          password: "password123",
-        }),
-      });
+      // Each visitor gets a fresh, private sandbox (no shared credentials).
+      const res = await fetch("/api/auth/demo", { method: "POST" });
 
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -75,17 +69,15 @@ export default function DemoPage() {
       </ul>
 
       <div className="mb-6 rounded-2xl border border-brand/25 bg-brand/[0.06] p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">{t.demo.sandboxProfile}</span>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">{t.demo.privateSandbox}</span>
           <Badge tone="positive">{t.demo.ready}</Badge>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-fg">Dandy Rahmat Zain</p>
-            <p className="text-sm text-fg-subtle">dandy@example.com</p>
-          </div>
-          <code className="rounded-lg border border-line bg-surface-1 px-2.5 py-1 font-mono text-xs text-fg-muted">password123</code>
-        </div>
+        <p className="text-sm text-fg">{t.demo.privateSandboxDesc}</p>
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-subtle">
+          <Clock className="size-3.5" aria-hidden />
+          {t.demo.expiresNote}
+        </p>
       </div>
 
       <Button variant="ai" size="lg" block onClick={handleDemoLogin} loading={isLoading}>

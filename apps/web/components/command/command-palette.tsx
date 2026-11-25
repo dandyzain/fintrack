@@ -3,12 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
-import { Eye, Languages, LayoutGrid, ListOrdered, LogOut, Moon, Plus, ScanLine, Search, Wallet } from "lucide-react";
+import { Eye, Languages, LogOut, Moon, Plus, ScanLine, Search, Wallet } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { usePrivacy } from "@/context/privacy-context";
 import { useAppActions } from "@/context/app-actions-context";
 import { useThemeSwitch } from "@/lib/hooks/use-theme-switch";
 import { endpoints } from "@/lib/api/client";
+import { NAV_ITEMS } from "@/components/layout/nav-items";
 import { overlayClass } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
@@ -38,10 +39,13 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     },
     {
       heading: t.command.groupNavigate,
-      items: [
-        { id: "overview", label: t.nav.overview, icon: LayoutGrid, onSelect: run(() => router.push("/")) },
-        { id: "transactions", label: t.nav.transactions, icon: ListOrdered, shortcut: "/", onSelect: run(() => router.push("/transactions")) },
-      ],
+      items: NAV_ITEMS.map((item) => ({
+        id: item.href,
+        label: item.label(t),
+        icon: item.icon,
+        shortcut: item.href === "/transactions" ? "/" : undefined,
+        onSelect: run(() => router.push(item.href)),
+      })),
     },
     {
       heading: t.command.groupPreferences,

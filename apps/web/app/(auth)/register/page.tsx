@@ -1,5 +1,6 @@
 "use client";
 
+import { PASSWORD_MIN_LENGTH } from "@fintrack/shared";
 import React, { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
@@ -46,7 +47,7 @@ export default function RegisterPage() {
       setErrorMsg(t.auth.allFieldsRequired);
       return;
     }
-    if (password.length < 6) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
       setErrorMsg(t.auth.passwordTooShort);
       return;
     }

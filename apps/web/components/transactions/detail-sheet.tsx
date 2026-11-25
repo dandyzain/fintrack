@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, Expand, FileText, Pencil, Receipt, ScanLine, Store, Tag, Trash2, Wallet } from "lucide-react";
+import { ArrowRightLeft, CalendarDays, Expand, FileText, Pencil, Receipt, Repeat, ScanLine, Store, Tag, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/language-context";
 import { useAppActions } from "@/context/app-actions-context";
@@ -47,6 +47,8 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
 
   const d = tx.data;
   const isIncome = d?.type === "INCOME";
+  const isTransfer = d?.type === "TRANSFER";
+  const typeLabel = isTransfer ? t.detail.transfer : isIncome ? t.detail.income : t.detail.expense;
 
   const startEdit = () => {
     if (!d) return;
@@ -54,6 +56,7 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
       type: d.type,
       amount: toNumber(d.amount),
       walletId: d.walletId,
+      toWalletId: d.toWalletId ?? (wallets.data ?? []).find((w) => w.id !== d.walletId)?.id ?? "",
       categoryId: d.categoryId ?? "",
       date: toDateInputValue(new Date(d.date)),
       merchantName: d.merchantName ?? "",
@@ -89,12 +92,20 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
   const info = d
     ? [
         { icon: CalendarDays, label: t.detail.date, value: formatDate(d.date, language, "weekday") },
-        { icon: Wallet, label: t.detail.pocket, value: localizeWalletName(d.wallet?.name, language) },
-        {
-          icon: Tag,
-          label: t.detail.category,
-          value: d.category ? localizeCategoryName(d.category.name, language) : t.transactions.uncategorized,
-        },
+        ...(isTransfer
+          ? [
+              { icon: Wallet, label: t.detail.fromPocket, value: localizeWalletName(d.wallet?.name, language) },
+              { icon: ArrowRightLeft, label: t.detail.toPocket, value: localizeWalletName(d.toWallet?.name, language) },
+            ]
+          : [
+              { icon: Wallet, label: t.detail.pocket, value: localizeWalletName(d.wallet?.name, language) },
+              {
+                icon: Tag,
+                label: t.detail.category,
+                value: d.category ? localizeCategoryName(d.category.name, language) : t.transactions.uncategorized,
+              },
+            ]),
+        ...(d.recurringId ? [{ icon: Repeat, label: t.transactions.recurringBadge, value: t.detail.recurring }] : []),
         ...(d.notes ? [{ icon: FileText, label: t.detail.notes, value: localizeTransactionNote(d.notes, language) }] : []),
       ]
     : [];
@@ -154,10 +165,10 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
       ) : (
         <div className="space-y-6">
           <div className="flex items-start gap-4">
-            <CategoryBubble icon={d.category?.icon} color={d.category?.color} income={isIncome} className="size-12 rounded-2xl" />
+            <CategoryBubble icon={d.category?.icon} color={d.category?.color} income={isIncome} transfer={isTransfer} className="size-12 rounded-2xl" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={isIncome ? "positive" : "negative"}>{isIncome ? t.detail.income : t.detail.expense}</Badge>
+                <Badge tone={isTransfer ? "brand" : isIncome ? "positive" : "negative"}>{typeLabel}</Badge>
                 {d.receiptImageUrl && (
                   <Badge tone="ai">
                     <ScanLine aria-hidden />
@@ -167,11 +178,11 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
               </div>
               <p className="mt-2 flex items-center gap-1.5 truncate text-base font-semibold text-fg">
                 <Store className="size-4 shrink-0 text-fg-subtle" aria-hidden />
-                {d.merchantName || (isIncome ? t.detail.income : t.detail.expense)}
+                {d.merchantName || typeLabel}
               </p>
               <Money
                 value={d.amount}
-                direction={isIncome ? "in" : "out"}
+                direction={isTransfer ? undefined : isIncome ? "in" : "out"}
                 tone={isIncome ? "positive" : "neutral"}
                 className="mt-1 text-3xl font-bold tracking-tight"
               />
@@ -211,6 +222,7 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
             </section>
           )}
 
+          {!isTransfer && (
           <section aria-labelledby="items-heading">
             <h3 id="items-heading" className="mb-2 text-sm font-semibold text-fg">
               {t.detail.items}
@@ -231,6 +243,7 @@ export function DetailSheet({ id, open, onOpenChange }: { id: string | null; ope
               <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-fg-subtle">{t.detail.noItems}</p>
             )}
           </section>
+          )}
         </div>
       )}
     </ResponsiveModal>

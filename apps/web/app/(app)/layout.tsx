@@ -1,5 +1,4 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
-import type { AuthUser } from "@fintrack/shared";
 import { AppShell } from "@/components/layout/app-shell";
 import { createServerQueryClient, prefetchJson } from "@/lib/api/server-prefetch";
 import { queryKeys } from "@/lib/api/keys";
@@ -14,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const qc = createServerQueryClient();
   await Promise.all([
-    prefetchJson<{ user: AuthUser }, AuthUser>(qc, queryKeys.me, "/api/auth/me", (d) => d.user),
+    prefetchJson(qc, queryKeys.me, "/api/auth/me"),
     prefetchJson(qc, queryKeys.wallets, "/api/wallets"),
     prefetchJson(qc, queryKeys.categories, "/api/categories"),
   ]);

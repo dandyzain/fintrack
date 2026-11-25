@@ -8,8 +8,8 @@ import { useLanguage } from "@/context/language-context";
 import { usePeriod } from "@/context/period-context";
 import { useAppActions } from "@/context/app-actions-context";
 import { useCategories, useDeleteTransactionWithUndo, useTransactionList, useWallets } from "@/lib/api/queries";
-import { endpoints, type Transaction, type TransactionQuery } from "@/lib/api/client";
-import { fmt, localizeCategoryName, localizeWalletName } from "@/lib/i18n/translations";
+import { transactionsCsvUrl, type Transaction, type TransactionQuery } from "@/lib/api/client";
+import { fmt } from "@/lib/i18n/translations";
 import { formatDate, formatMonth, toDateInputValue, toNumber } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,11 +26,6 @@ function useDebounced<T>(value: T, ms: number) {
     return () => window.clearTimeout(id);
   }, [value, ms]);
   return v;
-}
-
-function csvEscape(v: unknown) {
-  const s = String(v ?? "");
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 export interface TransactionsPageProps {
@@ -112,7 +107,8 @@ export function TransactionsPage({ initialWalletId = "", initialCategoryId = "",
           ? t.transactions.yesterday
           : formatDate(new Date(`${key}T00:00:00`), language, "weekday"),
       items: txs,
-      net: txs.reduce((s, x) => s + (x.type === "INCOME" ? 1 : -1) * toNumber(x.amount), 0),
+      // Transfers move money between pockets: they don't change the day's net.
+      net: txs.reduce((s, x) => s + (x.type === "INCOME" ? 1 : x.type === "EXPENSE" ? -1 : 0) * toNumber(x.amount), 0),
     }));
   }, [items, byDate, t, language]);
 
@@ -131,47 +127,17 @@ export function TransactionsPage({ initialWalletId = "", initialCategoryId = "",
     return () => io.disconnect();
   }, [list.hasNextPage, list.isFetchingNextPage, list.fetchNextPage, list]);
 
-  const exportCsv = async () => {
+  /** The server streams every matching row (no cap) with spreadsheet-safe cells. */
+  const exportCsv = () => {
     setExporting(true);
-    try {
-      const rows: Transaction[] = [];
-      let page = 1;
-      let pages = 1;
-      do {
-        const res = await endpoints.transactions({ ...query, limit: 100 }, page);
-        rows.push(...res.items);
-        pages = res.pagination.totalPages;
-        page++;
-      } while (page <= pages && page <= 50);
-
-      const header = ["Date", "Type", "Merchant", "Category", "Pocket", "Amount (IDR)", "Notes", "Receipt"];
-      const lines = rows.map((r) =>
-        [
-          toDateInputValue(new Date(r.date)),
-          r.type,
-          r.merchantName ?? "",
-          r.category ? localizeCategoryName(r.category.name, language) : "",
-          localizeWalletName(r.wallet?.name, language),
-          (r.type === "EXPENSE" ? -1 : 1) * toNumber(r.amount),
-          r.notes ?? "",
-          r.receiptImageUrl ?? "",
-        ]
-          .map(csvEscape)
-          .join(",")
-      );
-      const blob = new Blob(["﻿" + [header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `fintrack-transactions-${toDateInputValue(new Date())}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(fmt(t.transactions.exported, { count: rows.length }));
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setExporting(false);
-    }
+    const a = document.createElement("a");
+    a.href = transactionsCsvUrl(query, language);
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success(fmt(t.transactions.exported, { count: total }));
+    window.setTimeout(() => setExporting(false), 1200);
   };
 
   const periodLabel = mounted ? formatMonth(period.month, period.year, language) : "";

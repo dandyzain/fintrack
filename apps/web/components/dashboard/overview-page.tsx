@@ -56,7 +56,7 @@ export function OverviewPage() {
   const mounted = useMounted();
   // Clock-dependent text renders after mount so prerendered HTML never mismatches.
   const monthLabel = mounted ? formatMonth(period.month, period.year, language) : "";
-  const firstName = me.data?.name.split(" ")[0] ?? "";
+  const firstName = me.data?.user.name.split(" ")[0] ?? "";
   const a = analytics.data;
   const isEmptyMonth = a && a.summary.totalIncome === 0 && a.summary.totalExpense === 0;
   const knownCategories = new Set((categories.data ?? []).map((c) => c.id));

@@ -11,4 +11,7 @@ export const queryKeys = {
   transactionList: (q: TransactionQuery) => ["transactions", "list", q] as const,
   recent: (q: TransactionQuery) => ["transactions", "recent", q] as const,
   transaction: (id: string) => ["transaction", id] as const,
+  budgets: (p: Period) => ["budgets", p.year, p.month] as const,
+  recurring: ["recurring"] as const,
+  report: (p: Period, months: number) => ["report", p.year, p.month, months] as const,
 };

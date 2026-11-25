@@ -52,7 +52,7 @@ async function call(
   const url = `${BASE}/api/${route.replace(/\[id\]/, opts.params?.id ?? "x")}${opts.query ? `?${opts.query}` : ""}`;
   const res = await handler(new NextRequest(url, { method, headers, body }), { params: opts.params ?? {} });
   const text = await res.text();
-  let json: { success?: boolean; data?: any; error?: string; code?: string } = {};
+  let json: { success?: boolean; data?: any; error?: string; code?: string; message?: string } = {};
   try {
     json = JSON.parse(text);
   } catch {

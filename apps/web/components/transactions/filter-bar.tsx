@@ -15,7 +15,7 @@ export type RangePreset = "period" | "all" | "custom";
 
 export interface LedgerFilters {
   search: string;
-  type: "ALL" | "EXPENSE" | "INCOME";
+  type: "ALL" | "EXPENSE" | "INCOME" | "TRANSFER";
   walletId: string;
   categoryId: string;
   hasReceiptOnly: boolean;
@@ -219,6 +219,7 @@ export function FilterBar({ filters, onChange, onReset, wallets, categories, per
               { value: "ALL", label: t.transactions.typeAll },
               { value: "EXPENSE", label: t.transactions.typeExpense },
               { value: "INCOME", label: t.transactions.typeIncome },
+              { value: "TRANSFER", label: t.transactions.typeTransfer },
             ]}
           />
           <Button

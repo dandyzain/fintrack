@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Plus, ScanLine, Wallet } from "lucide-react";
+import { Menu, Plus, ScanLine } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useAppActions } from "@/context/app-actions-context";
 import { useScrollState } from "@/lib/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 import { NAV_ITEMS, isActive } from "./nav-items";
+import { MoreSheet } from "./more-sheet";
 
 const itemClass =
   "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[0.75rem] font-medium leading-none transition-colors";
@@ -18,11 +20,13 @@ const itemClass =
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const { openScanner, openEntry, openWallets } = useAppActions();
+  const { openScanner, openEntry } = useAppActions();
+  const [moreOpen, setMoreOpen] = useState(false);
   const { direction } = useScrollState();
   const hidden = direction === "down";
 
-  const [overview, transactions] = NAV_ITEMS;
+  const [overview, transactions, ...extra] = NAV_ITEMS;
+  const moreActive = extra.some((item) => isActive(pathname, item.href));
 
   const tab = (item: typeof overview, label: string) => {
     const active = isActive(pathname, item.href);
@@ -47,6 +51,7 @@ export function BottomNav() {
   };
 
   return (
+    <>
     <nav
       aria-label={t.nav.mainNav}
       className={cn(
@@ -74,11 +79,18 @@ export function BottomNav() {
           <Plus className="size-5" aria-hidden />
           <span className="max-w-full truncate px-1">{t.nav.addShort}</span>
         </button>
-        <button type="button" onClick={openWallets} className={cn(itemClass, "text-fg-subtle")}>
-          <Wallet className="size-5" aria-hidden />
-          <span className="max-w-full truncate px-1">{t.nav.pockets}</span>
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          aria-haspopup="dialog"
+          className={cn(itemClass, moreActive ? "text-brand-fg" : "text-fg-subtle")}
+        >
+          <Menu className="size-5" aria-hidden />
+          <span className="max-w-full truncate px-1">{t.nav.more}</span>
         </button>
       </div>
     </nav>
+    <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
+    </>
   );
 }

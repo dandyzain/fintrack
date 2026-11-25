@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Languages, LogOut, Monitor, Moon, Sun } from "lucide-react";
+import Link from "next/link";
+import { Languages, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
 import type { AuthUser } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
 import { useThemeSwitch } from "@/lib/hooks/use-theme-switch";
@@ -63,6 +64,13 @@ export function UserMenu({ user }: { user: AuthUser }) {
             <p className="truncate text-xs text-fg-subtle">{user.email}</p>
           </div>
         </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings aria-hidden />
+            {t.nav.settings}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{t.nav.theme}</DropdownMenuLabel>
         <DropdownMenuRadioGroup

@@ -8,15 +8,15 @@ const AUTH_PAGES = new Set(["/login", "/register", "/demo", "/forgot-password"])
 /** Reachable by everyone (the token in the link is what matters). */
 const TOKEN_PAGES = new Set(["/reset-password", "/verify-email"]);
 
-async function hasValidSession(request: NextRequest): Promise<boolean> {
+async function readSession(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return false;
+  if (!token) return null;
   try {
     // Signature and expiry are checked here; the session version is checked by the API.
-    return (await verifySessionToken(token)) !== null;
+    return await verifySessionToken(token);
   } catch (err) {
     if (err instanceof SessionSecretError) console.error(`[fintrack] ${err.message}`);
-    return false;
+    return null;
   }
 }
 
@@ -27,13 +27,17 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/")) return NextResponse.next();
   if (PUBLIC_PAGES.has(pathname) || TOKEN_PAGES.has(pathname)) return NextResponse.next();
 
-  const signedIn = await hasValidSession(request);
+  const session = await readSession(request);
+  const signedIn = session !== null;
 
   if (AUTH_PAGES.has(pathname)) {
-    if (signedIn) return NextResponse.redirect(new URL("/", request.url));
+    // Demo visitors may still sign in or create a real account (it replaces the sandbox session).
+    if (signedIn && !(session.demo && (pathname === "/register" || pathname === "/login"))) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
     const res = NextResponse.next();
     // Drop an expired/invalid cookie so the browser doesn't keep sending it.
-    if (request.cookies.has(SESSION_COOKIE_NAME)) res.cookies.delete(SESSION_COOKIE_NAME);
+    if (!signedIn && request.cookies.has(SESSION_COOKIE_NAME)) res.cookies.delete(SESSION_COOKIE_NAME);
     return res;
   }
 

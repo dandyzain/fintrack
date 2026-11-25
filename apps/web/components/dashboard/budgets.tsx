@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Target } from "lucide-react";
+import { ArrowRight, Target } from "lucide-react";
 import type { CategoryBudgetComparison } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
 import { usePeriod } from "@/context/period-context";
@@ -11,6 +12,7 @@ import { formatIDR, formatMonth } from "@/lib/format";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { Money } from "@/components/ui/money";
@@ -29,6 +31,14 @@ export function BudgetsCard({ items, loading }: { items?: CategoryBudgetComparis
         icon={<Target />}
         title={t.overview.budgets.title}
         description={mounted ? fmt(t.overview.budgets.subtitle, { month: formatMonth(month, year, language) }) : "\u00A0"}
+        action={
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/budgets">
+              {t.overview.pockets.manage}
+              <ArrowRight aria-hidden />
+            </Link>
+          </Button>
+        }
       />
       <div className="mt-5">
         {loading ? (
@@ -38,7 +48,16 @@ export function BudgetsCard({ items, loading }: { items?: CategoryBudgetComparis
             ))}
           </div>
         ) : !items?.length ? (
-          <EmptyState compact icon={<Target />} title={t.overview.budgets.empty} />
+          <EmptyState
+            compact
+            icon={<Target />}
+            title={t.overview.budgets.empty}
+            action={
+              <Button asChild size="sm" variant="outline">
+                <Link href="/budgets">{t.budgetsPage.setLimit}</Link>
+              </Button>
+            }
+          />
         ) : (
           <ul className="space-y-4">
             {items.map((b) => {
