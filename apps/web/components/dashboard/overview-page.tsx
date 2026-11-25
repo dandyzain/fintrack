@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useIsFetching } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,15 +60,39 @@ export function OverviewPage() {
   const a = analytics.data;
   const isEmptyMonth = a && a.summary.totalIncome === 0 && a.summary.totalExpense === 0;
   const knownCategories = new Set((categories.data ?? []).map((c) => c.id));
+  const syncing = useIsFetching({ queryKey: ["wallets"] }) + useIsFetching({ queryKey: ["analytics"] }) > 0;
+  const syncKey = Math.max(wallets.dataUpdatedAt, analytics.dataUpdatedAt);
+  const welcomeWords = t.overview.welcome.split(" ");
 
   return (
     <Stagger className="space-y-6 pb-4 sm:space-y-8">
       <RevealItem className="flex flex-col gap-1 pt-2">
-        <h1 className="min-h-[2.25rem] text-2xl font-bold tracking-tight text-fg sm:min-h-[2.5rem] sm:text-3xl">
-          {t.overview.welcome}
-          {firstName ? `, ${firstName}` : ""}
+        {/* Words rise in one after another; the name gets a single gradient sweep. */}
+        <h1
+          aria-label={`${t.overview.welcome}${firstName ? `, ${firstName}` : ""}`}
+          className="min-h-[2.25rem] text-2xl font-bold tracking-tight text-fg sm:min-h-[2.5rem] sm:text-3xl"
+        >
+          <span aria-hidden>
+            {welcomeWords.map((w, i) => (
+              <span key={i} className="motion-rise inline-block" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
+                {w}
+                {i === welcomeWords.length - 1 && firstName ? "," : ""}
+                {i < welcomeWords.length - 1 || firstName ? "\u00A0" : ""}
+              </span>
+            ))}
+            {firstName && (
+              <span className="motion-rise inline-block" style={{ "--d": `${welcomeWords.length * 70}ms` } as React.CSSProperties}>
+                <span
+                  className="motion-text-shimmer bg-gradient-to-r from-brand-fg via-ai-fg to-brand-fg"
+                  style={{ "--d": `${welcomeWords.length * 70 + 250}ms` } as React.CSSProperties}
+                >
+                  {firstName}
+                </span>
+              </span>
+            )}
+          </span>
         </h1>
-        <p className="min-h-[1.5rem] text-sm text-fg-subtle sm:text-base">
+        <p className="motion-fade min-h-[1.5rem] text-sm text-fg-subtle sm:text-base" style={{ "--d": "300ms" } as React.CSSProperties}>
           {mounted ? fmt(t.overview.subtitle, { month: monthLabel }) : "\u00A0"}
         </p>
       </RevealItem>
@@ -80,6 +105,10 @@ export function OverviewPage() {
             current={a}
             previous={previous.data}
             loading={wallets.isPending || analytics.isPending}
+            trends={a?.dailyTrends}
+            isCurrentPeriod={period.isCurrent}
+            syncing={syncing}
+            syncKey={syncKey}
           />
         </RevealItem>
         <RevealItem className="lg:col-span-4">

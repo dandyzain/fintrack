@@ -1,12 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { HeartPulse, Sparkles } from "lucide-react";
 import type { DashboardAnalyticsResponse } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
 import { getLocalizedHealthAdvisory } from "@/lib/i18n/translations";
 import { formatPercent } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/feedback";
 
@@ -25,7 +23,6 @@ const C = 2 * Math.PI * R;
 /** Single source of the health score (it used to appear three times). */
 export function HealthCard({ analytics, loading }: { analytics?: DashboardAnalyticsResponse; loading?: boolean }) {
   const { t, language } = useLanguage();
-  const reduce = useReducedMotion();
   const s = analytics?.summary;
   const hasData = Boolean(s && (s.totalIncome > 0 || s.totalExpense > 0));
   const score = analytics?.financialHealth?.score ?? 0;
@@ -49,7 +46,11 @@ export function HealthCard({ analytics, loading }: { analytics?: DashboardAnalyt
           <HeartPulse className="size-4 text-brand-fg" aria-hidden />
           {t.overview.health.title}
         </h2>
-        {hasData && !loading && <Badge tone={tone === "brand" ? "brand" : tone}>{badge}</Badge>}
+        {hasData && !loading && (
+          <Badge tone={tone === "brand" ? "brand" : tone} className="motion-pop" style={{ "--d": "1250ms" } as React.CSSProperties}>
+            {badge}
+          </Badge>
+        )}
       </div>
 
       {loading ? (
@@ -87,7 +88,7 @@ export function HealthCard({ analytics, loading }: { analytics?: DashboardAnalyt
                   </linearGradient>
                 </defs>
                 <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(var(--surface-3))" strokeWidth="10" />
-                <motion.circle
+                <circle
                   cx="60"
                   cy="60"
                   r={R}
@@ -96,19 +97,26 @@ export function HealthCard({ analytics, loading }: { analytics?: DashboardAnalyt
                   strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={C}
-                  initial={{ strokeDashoffset: reduce ? C * (1 - score / 100) : C }}
-                  animate={{ strokeDashoffset: C * (1 - score / 100) }}
-                  transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                  strokeDashoffset={C * (1 - score / 100)}
+                  className="motion-ring"
+                  style={{ "--ring-c": `${C}`, "--d": "150ms" } as React.CSSProperties}
                 />
+                {/* Glowing tip that rides the end of the arc while it draws */}
+                <g className="motion-orbit" style={{ "--angle": `${(360 * score) / 100}deg`, "--d": "150ms" } as React.CSSProperties}>
+                  <circle cx={60 + R} cy={60} r={9} fill={stops[1]} opacity={0.25} className="motion-breathe" />
+                  <circle cx={60 + R} cy={60} r={4} fill="rgb(var(--surface-1))" stroke={stops[1]} strokeWidth={2.5} />
+                </g>
               </svg>
               <div className="absolute inset-0 grid place-items-center text-center">
                 <div>
-                  <p className="tabular text-3xl font-bold tracking-tight text-fg">{score}</p>
+                  <p className="motion-pop tabular text-3xl font-bold tracking-tight text-fg" style={{ "--d": "500ms" } as React.CSSProperties}>
+                    {score}
+                  </p>
                   <p className="text-xs text-fg-subtle">{t.overview.health.outOf}</p>
                 </div>
               </div>
             </div>
-            <div className="min-w-0 text-center sm:text-left lg:text-center xl:text-left">
+            <div className="motion-rise min-w-0 text-center sm:text-left lg:text-center xl:text-left" style={{ "--d": "700ms" } as React.CSSProperties}>
               <p className="text-base font-semibold text-fg">{advisory.label}</p>
               <p className="mt-1 text-sm leading-relaxed text-fg-muted">{advisory.message}</p>
             </div>
@@ -120,11 +128,9 @@ export function HealthCard({ analytics, loading }: { analytics?: DashboardAnalyt
               <span className="tabular font-semibold text-fg">{formatPercent(savings, language)}</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-3" aria-hidden>
-              <motion.div
-                className={cn("h-full rounded-full bg-gradient-to-r from-brand to-ai")}
-                initial={{ width: reduce ? `${Math.min(100, savings)}%` : 0 }}
-                animate={{ width: `${Math.min(100, savings)}%` }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+              <div
+                className="motion-bar h-full rounded-full bg-gradient-to-r from-brand to-ai"
+                style={{ width: `${Math.min(100, savings)}%`, "--d": "300ms" } as React.CSSProperties}
               />
             </div>
           </div>

@@ -18,6 +18,11 @@ interface MoneyProps extends Omit<MoneyOptions, "lang"> {
   animateOnView?: boolean;
   /** Treat as expense/income for sign + color (amounts from the API are always positive). */
   direction?: "in" | "out";
+  /**
+   * Cascade the real digits in on first paint (CSS, no placeholder numbers).
+   * Value is the base delay in ms.
+   */
+  revealDelay?: number;
 }
 
 const toneClass: Record<Exclude<Tone, "auto">, string> = {
@@ -35,6 +40,7 @@ export function Money({
   direction,
   sign,
   compact,
+  revealDelay,
 }: MoneyProps) {
   const { hidden } = usePrivacy();
   const { language, t } = useLanguage();
@@ -98,7 +104,21 @@ export function Money({
         className
       )}
     >
-      <span aria-hidden>{text}</span>
+      {revealDelay === undefined ? (
+        <span aria-hidden>{text}</span>
+      ) : (
+        <span aria-hidden className="inline-block [perspective:600px]">
+          {Array.from(text).map((ch, i) => (
+            <span
+              key={i}
+              className="motion-digit"
+              style={{ "--d": `${revealDelay + i * 28}ms` } as React.CSSProperties}
+            >
+              {ch}
+            </span>
+          ))}
+        </span>
+      )}
       <span className="sr-only">{hidden ? t.common.hiddenAmount : finalText}</span>
     </span>
   );

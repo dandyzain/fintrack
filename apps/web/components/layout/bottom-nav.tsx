@@ -56,7 +56,7 @@ export function BottomNav() {
     >
       <div className="mx-auto flex h-[4.25rem] max-w-md items-stretch gap-1 px-2 pb-safe">
         {tab(overview, t.nav.overview)}
-        {tab(transactions, t.nav.transactions)}
+        {tab(transactions, t.nav.transactionsShort)}
 
         <div className="flex flex-1 items-start justify-center">
           <button

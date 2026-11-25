@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, type Variants } from "framer-motion";
 import { CalendarDays, Coins, Lightbulb, ScanLine, TrendingDown } from "lucide-react";
 import type { DashboardAnalyticsResponse } from "@fintrack/shared";
 import { useLanguage } from "@/context/language-context";
@@ -43,6 +44,17 @@ export function buildInsight(
   const pct = formatPercent(Math.abs(best.change), lang);
   return fmt(best.change < 0 ? t.overview.insights.lower : t.overview.insights.higher, { category, pct });
 }
+
+/** Tiles inherit "show" from the section's in-view reveal and cascade in. */
+const tileVariants: Variants = {
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { delay: 0.12 + i * 0.08, duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
 
 export function InsightsRow({
   analytics,
@@ -118,11 +130,16 @@ export function InsightsRow({
         aria-labelledby="insights-heading"
         className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         {tiles.map((tile) => (
-          <li key={tile.key} className="w-[72%] shrink-0 snap-start min-[480px]:w-[46%] sm:w-auto">
-            <Card spotlight className="h-full p-4 sm:p-5">
+          <motion.li
+            key={tile.key}
+            custom={tiles.indexOf(tile)}
+            variants={tileVariants}
+            className="w-[72%] shrink-0 snap-start min-[480px]:w-[46%] sm:w-auto"
+          >
+            <Card spotlight className="group h-full p-4 transition-shadow duration-slow fine:hover:shadow-elev-2 sm:p-5">
               <div className="flex items-center gap-2.5">
                 <span aria-hidden className={cn("grid size-8 place-items-center rounded-lg", tile.tint)}>
-                  <tile.icon className="size-4" />
+                  <tile.icon className="motion-wiggle size-4" />
                 </span>
                 <p className="text-sm font-medium text-fg-muted">{tile.label}</p>
               </div>
@@ -138,7 +155,7 @@ export function InsightsRow({
                 </>
               )}
             </Card>
-          </li>
+          </motion.li>
         ))}
       </ul>
     </section>

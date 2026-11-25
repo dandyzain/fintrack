@@ -37,6 +37,7 @@ export const translations = {
     nav: {
       overview: "Overview",
       transactions: "Transactions",
+      transactionsShort: "Activity",
       pockets: "Pockets",
       scan: "Scan receipt",
       scanShort: "Scan",
@@ -69,6 +70,11 @@ export const translations = {
     },
     overview: {
       welcome: "Welcome back",
+      upToDate: "Up to date",
+      syncing: "Syncing…",
+      netFlowTitle: "Net flow this month",
+      netFlowAria: "Net cashflow trend this month, from {start} to {end}",
+      netFlowAriaHidden: "Net cashflow trend this month",
       subtitle: "Here's where your money stands for {month}.",
       totalBalance: "Total balance",
       acrossPockets: "Across {count} pockets",
@@ -434,6 +440,7 @@ export const translations = {
     nav: {
       overview: "Ringkasan",
       transactions: "Transaksi",
+      transactionsShort: "Transaksi",
       pockets: "Kantong",
       scan: "Pindai struk",
       scanShort: "Pindai",
@@ -466,6 +473,11 @@ export const translations = {
     },
     overview: {
       welcome: "Selamat datang kembali",
+      upToDate: "Terbaru",
+      syncing: "Menyinkronkan…",
+      netFlowTitle: "Arus bersih bulan ini",
+      netFlowAria: "Tren arus kas bersih bulan ini, dari {start} ke {end}",
+      netFlowAriaHidden: "Tren arus kas bersih bulan ini",
       subtitle: "Begini posisi keuanganmu untuk {month}.",
       totalBalance: "Total saldo",
       acrossPockets: "Di {count} kantong",

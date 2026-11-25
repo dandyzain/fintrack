@@ -34,7 +34,7 @@ function walletIcon(name: string) {
 }
 
 /** Signature moment #2: holographic pocket cards that tilt toward the cursor. */
-function PocketCard({ wallet, share }: { wallet: Wallet; share: number }) {
+function PocketCard({ wallet, share, index = 0 }: { wallet: Wallet; share: number; index?: number }) {
   const { t, language } = useLanguage();
   const reduce = useReducedMotion();
   const gradient = GRADIENTS[hashString(wallet.id) % GRADIENTS.length];
@@ -93,7 +93,10 @@ function PocketCard({ wallet, share }: { wallet: Wallet; share: number }) {
             <Money value={wallet.balance} className="text-2xl font-bold tracking-tight" />
             <div className="mt-3 flex items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/20" aria-hidden>
-                <div className="h-full rounded-full bg-white/80" style={{ width: `${Math.max(2, Math.min(100, share))}%` }} />
+                <div
+                  className="motion-bar h-full rounded-full bg-white/80"
+                  style={{ width: `${Math.max(2, Math.min(100, share))}%`, "--d": `${700 + index * 110}ms` } as React.CSSProperties}
+                />
               </div>
               <span className="tabular whitespace-nowrap text-xs font-medium text-white/80">
                 {fmt(t.overview.pockets.shareOfTotal, { pct: formatPercent(share, language) })}
@@ -146,12 +149,20 @@ export function PocketsSection({ wallets, loading }: { wallets?: Wallet[]; loadi
         <ul
           className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4"
         >
-          {wallets.map((w) => (
-            <li key={w.id} className="w-[82%] shrink-0 snap-start min-[480px]:w-[62%] sm:w-auto">
-              <PocketCard wallet={w} share={total > 0 ? (Math.max(0, toNumber(w.balance)) / total) * 100 : 0} />
+          {/* Cards are "dealt" onto the table one after another */}
+          {wallets.map((w, i) => (
+            <li
+              key={w.id}
+              className="motion-deal w-[82%] shrink-0 snap-start min-[480px]:w-[62%] sm:w-auto"
+              style={{ "--d": `${250 + i * 110}ms` } as React.CSSProperties}
+            >
+              <PocketCard index={i} wallet={w} share={total > 0 ? (Math.max(0, toNumber(w.balance)) / total) * 100 : 0} />
             </li>
           ))}
-          <li className="w-[82%] shrink-0 snap-start min-[480px]:w-[62%] sm:w-auto">
+          <li
+            className="motion-deal w-[82%] shrink-0 snap-start min-[480px]:w-[62%] sm:w-auto"
+            style={{ "--d": `${250 + wallets.length * 110}ms` } as React.CSSProperties}
+          >
             <button
               type="button"
               onClick={openWallets}
