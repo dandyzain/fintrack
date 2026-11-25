@@ -9,6 +9,12 @@ import { Field, Input } from "@/components/ui/field";
 import { InlineAlert } from "@/components/ui/feedback";
 import { PasswordInput } from "@/components/auth/password-input";
 
+/** Only same-site paths are accepted as `?next=` (no open redirect). */
+function safeNext(): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/";
+}
+
 export default function LoginPage() {
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
@@ -38,8 +44,7 @@ export default function LoginPage() {
         throw new Error(json.error || t.auth.loginFailed);
       }
 
-      // Login successful -> redirect to dashboard
-      window.location.href = "/";
+      window.location.href = safeNext();
     } catch (err) {
       setErrorMsg((err as Error).message);
       setIsLoading(false);
@@ -69,7 +74,14 @@ export default function LoginPage() {
           />
         </Field>
 
-        <Field label={t.auth.password}>
+        <Field
+          label={t.auth.password}
+          badge={
+            <Link href="/forgot-password" className="text-xs font-semibold text-brand-fg underline-offset-4 hover:underline">
+              {t.auth.forgotLink}
+            </Link>
+          }
+        >
           <PasswordInput
             autoComplete="current-password"
             value={password}

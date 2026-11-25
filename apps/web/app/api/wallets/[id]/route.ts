@@ -1,68 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@fintrack/database";
-import { getCurrentUserId } from "@/lib/auth";
-import type { ApiResponse } from "@fintrack/shared";
-import { demoStore } from "@/lib/demo-store";
+import { UpdateWalletSchema } from "@fintrack/shared";
+import { withUser } from "@/lib/server/auth";
+import { notFound } from "@/lib/server/errors";
+import { ok, parseBody } from "@/lib/server/http";
+import { getStore } from "@/lib/server/store";
+import { deleteWalletRequest } from "../delete";
 
 export const dynamic = "force-dynamic";
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const userId = await getCurrentUserId(request);
-  const walletId = params.id;
+type Params = { id: string };
 
-  if (!walletId) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: "ID kantong wajib disertakan." },
-      { status: 400 }
-    );
-  }
+export const GET = withUser<Params>(async (_request, { user, params }) => {
+  const wallet = await getStore().getWallet(user.id, params.id);
+  if (!wallet) throw notFound("Kantong tidak ditemukan.");
+  return ok(wallet);
+});
 
-  if (!process.env.DATABASE_URL) {
-    try {
-      demoStore.deleteWallet(userId, walletId);
-      return NextResponse.json<ApiResponse>({
-        success: true,
-        message: "Kantong berhasil dihapus.",
-      });
-    } catch (err) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: (err as Error).message },
-        { status: 400 }
-      );
-    }
-  }
+/** Rename a pocket and/or correct its balance. */
+export const PATCH = withUser<Params>(async (request, { user, params }) => {
+  const input = await parseBody(request, UpdateWalletSchema);
+  return ok(await getStore().updateWallet(user.id, params.id, input), { message: "Kantong berhasil diperbarui." });
+});
 
-  try {
-    const userWalletsCount = await prisma.wallet.count({ where: { userId } });
-    if (userWalletsCount <= 1) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Tidak dapat menghapus kantong terakhir. Akun Anda harus memiliki minimal satu kantong.",
-        },
-        { status: 400 }
-      );
-    }
-
-    await prisma.transaction.deleteMany({
-      where: { walletId, userId },
-    });
-
-    await prisma.wallet.delete({
-      where: { id: walletId, userId },
-    });
-
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      message: "Kantong berhasil dihapus.",
-    });
-  } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
+export const DELETE = withUser<Params>(async (request, { user, params }) => deleteWalletRequest(request, user.id, params.id));

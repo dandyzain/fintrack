@@ -1148,6 +1148,7 @@ export default function MobileDashboardScreen() {
         ) : (
           <View style={styles.txList}>
             {transactions.map((tx: any) => {
+              const isTransfer = tx.type === "TRANSFER";
               const isExp = tx.type === "EXPENSE";
               const formattedDate = new Date(tx.date).toLocaleDateString(
                 "id-ID",
@@ -1172,16 +1173,18 @@ export default function MobileDashboardScreen() {
                     style={[
                       styles.txIconBox,
                       {
-                        backgroundColor: isExp
+                        backgroundColor: isTransfer
+                          ? colors.surfaceHighlight
+                          : isExp
                           ? colors.expenseIconBg
                           : colors.incomeIconBg,
                       },
                     ]}
                   >
                     <Ionicons
-                      name={isExp ? "arrow-down" : "arrow-up"}
+                      name={isTransfer ? "swap-horizontal" : isExp ? "arrow-down" : "arrow-up"}
                       size={16}
-                      color={isExp ? colors.expenseText : colors.incomeText}
+                      color={isTransfer ? colors.textSecondary : isExp ? colors.expenseText : colors.incomeText}
                     />
                   </View>
 
@@ -1190,11 +1193,12 @@ export default function MobileDashboardScreen() {
                       style={[styles.txTitle, { color: colors.textPrimary }]}
                       numberOfLines={1}
                     >
-                      {tx.merchantName || (isExp ? "Pengeluaran" : "Pemasukan")}
+                      {tx.merchantName || (isTransfer ? "Transfer" : isExp ? "Pengeluaran" : "Pemasukan")}
                     </Text>
                     <View style={styles.txMetaRow}>
                       <Text style={[styles.txMeta, { color: colors.textMuted }]}>
                         {formattedDate} • {tx.wallet?.name || "Dompet"}
+                        {isTransfer && tx.toWallet?.name ? ` → ${tx.toWallet.name}` : ""}
                       </Text>
                       {tx.category && (
                         <View
@@ -1230,10 +1234,14 @@ export default function MobileDashboardScreen() {
                       style={[
                         styles.amountPill,
                         {
-                          backgroundColor: isExp
+                          backgroundColor: isTransfer
+                            ? colors.surfaceHighlight
+                            : isExp
                             ? colors.expenseBg
                             : colors.incomeBg,
-                          borderColor: isExp
+                          borderColor: isTransfer
+                            ? colors.border
+                            : isExp
                             ? colors.expenseBorder
                             : colors.incomeBorder,
                         },
@@ -1243,13 +1251,15 @@ export default function MobileDashboardScreen() {
                         style={[
                           styles.amountPillText,
                           {
-                            color: isExp
+                            color: isTransfer
+                              ? colors.textSecondary
+                              : isExp
                               ? colors.expenseText
                               : colors.incomeText,
                           },
                         ]}
                       >
-                        {isExp ? "-" : "+"}Rp{" "}
+                        {isTransfer ? "" : isExp ? "-" : "+"}Rp{" "}
                         {Number(tx.amount).toLocaleString("id-ID")}
                       </Text>
                     </View>

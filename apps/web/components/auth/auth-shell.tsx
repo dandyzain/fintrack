@@ -33,7 +33,7 @@ function ThemeToggle() {
   );
 }
 
-function LanguageToggle() {
+export function LanguageToggle() {
   const { t, language, setLanguage } = useLanguage();
   return (
     <SegmentedControl
@@ -50,7 +50,7 @@ function LanguageToggle() {
 }
 
 /** Floating stack of pocket cards for the brand panel. */
-function CardStack() {
+export function CardStack() {
   const reduce = useReducedMotion();
   const cards = [
     { g: "from-[#5B21B6] via-[#6D28D9] to-[#1E1B4B]", label: "BCA", amount: "Rp 5.000.000", rot: -8, x: -36, y: 24 },

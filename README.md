@@ -1,226 +1,244 @@
 # FinTrack AI — Personal Finance & OCR Receipt Scanner (Web & Mobile)
 
-Aplikasi **Personal Finance & Expense Tracker** siap produksi untuk portofolio tingkat lanjut (*Senior/Lead Fullstack Engineer*), dilengkapi fitur pemindaian struk belanja fisik otomatis berbasis **Vision AI (Google Gemini Flash & OpenAI Vision)** dengan validasi kontrak data Zod, mutasi saldo dompet atomik (`prisma.$transaction`), dasbor analitik Recharts, dan aplikasi mobile Expo React Native.
+Aplikasi **Personal Finance & Expense Tracker** untuk web dan mobile: pemindaian struk otomatis dengan **Vision AI (Google Gemini, cadangan OpenAI)**, kantong (rekening/e-wallet/tunai) dengan transfer antar kantong, anggaran per kategori, transaksi berulang, laporan 12 bulan, dan akun yang aman (reset kata sandi, verifikasi email, ekspor & hapus data).
 
 ---
 
 ## 🏛️ Arsitektur Sistem & Tech Stack
 
-Proyek ini dibangun menggunakan arsitektur **Monorepo** modern berbasis **pnpm workspaces** dan **Turborepo**:
+Monorepo berbasis **pnpm workspaces** dan **Turborepo**:
 
 ```
-finance-tracker/
+fintrack/
 ├── apps/
 │   ├── web/               # Next.js 14 (App Router, Route Handlers, Recharts, Tailwind CSS)
-│   └── mobile/            # React Native Expo (Expo Camera, Image Manipulator, TanStack Query)
+│   └── mobile/            # React Native Expo (Expo Camera, Image Manipulator)
 └── packages/
-    ├── database/          # Prisma ORM + Client singleton (PostgreSQL / Supabase / Neon)
-    └── shared/            # Kontrak Zod & TypeScript types terpadu untuk Web & Mobile
+    ├── database/          # Prisma schema, migrasi, seed, client singleton (PostgreSQL)
+    └── shared/            # Kontrak Zod & tipe TypeScript bersama untuk server, web, dan mobile
 ```
 
-### Tech Stack:
-- **Web App:** Next.js 14 (App Router), React 18, Tailwind CSS, TanStack Query, Radix UI, Framer Motion, Recharts (lazy-loaded), Lucide Icons.
-- **Mobile App:** React Native via Expo SDK 51, Expo Camera, Expo Image Manipulator, TanStack React Query.
-- **Data Layer:** PostgreSQL (Supabase / Neon), Prisma ORM v5, Supabase Storage (bucket `receipts`).
-- **AI Extraction Engine:** Google Gemini Flash (`gemini-1.5-flash`) dengan `responseMimeType: "application/json"`, fallback ke OpenAI Vision (`gpt-4o-mini`).
-- **Validasi & Type Safety:** Zod v3 dengan *Zero Incomplete Implementations* dan *Strict Typing*.
+### Tech Stack
+- **Web:** Next.js 14 (App Router), React 18, Tailwind CSS, TanStack Query, Radix UI, Framer Motion, Recharts (lazy-loaded), Lucide Icons.
+- **Mobile:** React Native via Expo SDK 51, Expo Camera, Expo Image Manipulator, Expo SecureStore.
+- **Data:** PostgreSQL (Supabase / Neon) via Prisma 5 dengan **migrasi berversi**; Supabase Storage (bucket **privat** `receipts`).
+- **AI:** Google Gemini (`gemini-flash-latest` secara default, bisa diganti lewat `GEMINI_MODEL`), cadangan OpenAI Vision.
+- **Kualitas:** Zod di setiap batas API, Vitest (unit, kontrak store, dan API) dijalankan di memori dan di PostgreSQL, ESLint, CI GitHub/GitLab.
+
+### Lapisan server (`apps/web/lib/server/`)
+
+| Modul | Isi |
+|---|---|
+| `store/` | Satu antarmuka `FinanceStore` dengan dua implementasi: **PostgreSQL** (`prisma-store.ts`) dan **memori** (`memory-store.ts`). Mode dipilih dari konfigurasi (`DATABASE_URL`); error database **tidak pernah** diam-diam dialihkan ke memori. |
+| `domain/` | Aturan murni yang dipakai kedua store: efek saldo (`balance.ts`), analitik & laporan (`analytics.ts`), jadwal berulang (`recurrence.ts`), data contoh demo. |
+| `services/` | Alur bisnis: akun (registrasi, login, reset, verifikasi, hapus/ekspor), transaksi, transaksi berulang, analitik. |
+| `auth.ts`, `http.ts`, `errors.ts` | `withUser()` mewajibkan sesi di setiap route privat; error internal dicatat dan tidak pernah dikirim ke klien. |
+| `receipts.ts`, `rate-limit.ts`, `mailer.ts`, `logger.ts` | Penyimpanan struk privat + signed URL, rate limit bersama, email (Resend), log JSON + pelaporan error opsional ke Sentry. |
 
 ---
 
-## 🎨 Sistem Desain Web — "Aurora Ledger"
+## ✨ Fitur
 
-Antarmuka web memakai sistem desain *Aurora Ledger*: tata letak tenang yang mengutamakan angka, dengan sedikit momen visual khas (aurora pada saldo, kartu kantong yang miring mengikuti kursor, dan sinar pemindai struk).
-
-| Lapisan | Lokasi | Isi |
-|---|---|---|
-| Token desain | `apps/web/app/globals.css`, `tailwind.config.ts` | Warna berbasis peran (`surface`, `fg`, `brand`, `ai`, `positive`, `negative`, `warning`) untuk mode terang & gelap, lolos kontras WCAG AA. Cyan dikhususkan untuk fitur AI. |
-| Komponen dasar | `apps/web/components/ui/` | Button, Field, AmountInput, Money (mode privasi + animasi angka), Dialog/Sheet/Drawer responsif (Radix + vaul), ConfirmDialog, SegmentedControl, Skeleton, EmptyState. |
-| Data | `apps/web/lib/api/` | Hook TanStack Query di atas Route Handler yang **sama** (tanpa perubahan API). Halaman Ringkasan melakukan *prefetch* di server dengan memanggil API milik aplikasi sendiri. |
-| Format & i18n | `apps/web/lib/format.ts`, `lib/i18n/translations.ts` | Format Rupiah/tanggal terpusat; seluruh teks EN/ID ada di kamus (paritas dijaga oleh TypeScript). |
-
-**Fitur UX:** daftar transaksi per hari dengan *infinite scroll*, filter & ekspor CSV · detail transaksi dengan ubah/hapus + *Undo* · pemindai struk dengan seret-lepas, tempel, kamera, dan penanda kolom yang diisi AI · pemilih bulan · mode privasi saldo · palet perintah (`⌘K`) dan pintasan `N`, `S`, `/` · navigasi bawah di ponsel dengan drawer.
-
-**Aksesibilitas & performa:** 0 pelanggaran axe (WCAG 2.1 AA) di semua halaman, kedua tema, dan semua overlay; menghormati `prefers-reduced-motion`; Lighthouse seluler ≥ 85 di semua halaman.
+- **Transaksi:** pengeluaran, pemasukan, dan **transfer antar kantong** (tidak dihitung sebagai pemasukan/pengeluaran), item belanja, filter, pencarian (tidak peka huruf besar/kecil, termasuk nama kategori), ekspor CSV di server tanpa batas baris dan aman dari *CSV injection*.
+- **Kantong:** buat, ubah nama, koreksi saldo; menghapus kantong yang masih punya transaksi wajib memilih *pindahkan ke kantong lain* atau *hapus semuanya*.
+- **Anggaran:** batas bulanan per kategori, salin dari bulan sebelumnya; kategori tanpa anggaran tidak dianggap "melebihi anggaran".
+- **Kategori kustom:** ikon & warna sendiri; kategori bawaan bersifat baca-saja.
+- **Transaksi berulang:** harian/mingguan/bulanan/tahunan dengan interval, tanggal mulai (mengisi kejadian yang terlewat) & selesai, jeda/lanjutkan. Diproses otomatis saat aplikasi dibuka dan oleh cron harian.
+- **Laporan:** 6/12/24 bulan — pemasukan vs pengeluaran, rasio tabungan, bulan terbaik/terberat, pengeluaran per kategori, tabel bulanan.
+- **Akun:** reset kata sandi via email, verifikasi email, ganti nama/email/kata sandi, keluar dari semua perangkat, unduh semua data (JSON), hapus akun permanen.
+- **Demo:** setiap pengunjung mendapat **sandbox pribadi** berisi data contoh 3 bulan; dihapus otomatis setelah 24 jam.
+- **Halaman publik:** landing page untuk tamu di `/`, Kebijakan Privasi, Ketentuan, halaman 404/error.
 
 ---
 
-## 🚀 Alur Kerja Pemindaian Struk (OCR Vision AI)
+## 🔒 Keamanan
+
+| Area | Implementasi |
+|---|---|
+| Autentikasi | Setiap route privat memakai `withUser()` → 401 tanpa sesi valid (diuji otomatis untuk **semua** route). Middleware memverifikasi tanda tangan & kedaluwarsa token. |
+| Sesi | Token HS256 (Web Crypto) dengan `SESSION_SECRET` **wajib** di produksi. Versi sesi di database: ganti/reset kata sandi dan "keluar dari semua perangkat" mencabut semua sesi lain. |
+| Kata sandi | scrypt (N=2¹⁵); hash PBKDF2 lama tetap bisa login dan otomatis di-upgrade. Perbandingan *constant-time*; email tidak terdaftar memakan waktu yang sama (anti enumerasi). Minimal 8 karakter. |
+| Rate limit | Login (per IP & per akun), registrasi, reset kata sandi, pemindaian struk, dan pembuatan demo — penghitung disimpan di database sehingga berlaku di semua instance serverless. |
+| Struk | Bucket privat, path ditentukan dari sesi, signed URL 1 jam, tipe file diperiksa dari *magic bytes* (bukan label MIME), upload hanya setelah ekstraksi berhasil. |
+| Respons | Error internal tidak pernah bocor; header keamanan (CSP, HSTS, `frame-ancestors 'none'`, Permissions-Policy); respons API `Cache-Control: no-store`. |
+
+---
+
+## 🚀 Alur Pemindaian Struk
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Pengguna (Web / Mobile)
-    participant Client as Web / Expo App
-    participant API as Route Handler (/api/receipts/scan)
-    participant Storage as Supabase Storage (receipts)
-    participant AI as Google Gemini Flash API
-    participant Review as Formulir Peninjauan (Review Form)
-    participant DB as Prisma PostgreSQL ($transaction)
+    participant API as /api/receipts/scan (wajib login)
+    participant AI as Gemini / OpenAI
+    participant Storage as Supabase Storage (privat)
+    participant DB as PostgreSQL
 
-    User->>Client: Ambil foto / Unggah gambar struk
-    Note over Client: Mobile kompres gambar (max 1200px, quality 0.7)
-    Client->>API: POST /api/receipts/scan (multipart/form-data)
-    API->>Storage: Unggah buffer gambar struk
-    Storage-->>API: Kembalikan public URL
-    API->>AI: Kirim image buffer + Prompt ketat format JSON Zod
-    AI-->>API: JSON terstruktur (merchant, tanggal, total, tax, items, kategori)
-    API->>API: ReceiptExtractionSchema.safeParse()
-    API-->>Client: Kembalikan hasil ekstraksi (Tanpa commit ke DB!)
-    Client->>Review: Tampilkan formulir review interaktif
-    User->>Review: Periksa nominal, pilih dompet, sesuaikan item
-    User->>Client: Klik "Konfirmasi & Simpan Transaksi"
-    Client->>DB: POST /api/transactions (Mutasi Atomik Saldo Dompet)
-    DB-->>Client: Transaksi tersimpan & saldo terupdate
-    Client-->>User: Perbarui grafik tren & pagu anggaran
+    User->>API: Foto struk (multipart)
+    API->>API: Rate limit · cek ukuran · deteksi tipe dari isi file
+    API->>AI: Gambar + instruksi JSON
+    AI-->>API: merchant, tanggal, total, pajak, item, kategori
+    API->>API: Validasi Zod (ReceiptExtractionSchema)
+    API->>Storage: Upload ke <userId>/... (hanya jika ekstraksi berhasil)
+    API-->>User: Hasil + signed URL (belum disimpan ke DB)
+    User->>API: Tinjau & konfirmasi → POST /api/transactions
+    API->>DB: Transaksi + increment saldo atomik
 ```
 
 ---
 
-## ⚙️ Skema Basis Data Relasional
+## ⚙️ Skema Basis Data
 
 ```mermaid
 erDiagram
-    User ||--o{ Wallet : "memiliki"
-    User ||--o{ Category : "membuat"
-    User ||--o{ Transaction : "mencatat"
-    User ||--o{ Budget : "menetapkan"
-
+    User ||--o{ Wallet : memiliki
+    User ||--o{ Category : membuat
+    User ||--o{ Transaction : mencatat
+    User ||--o{ Budget : menetapkan
+    User ||--o{ RecurringTransaction : menjadwalkan
+    User ||--o{ AuthToken : "reset & verifikasi"
     Wallet ||--o{ Transaction : "sumber dana"
-    Category ||--o{ Transaction : "kategori"
+    Wallet ||--o{ Transaction : "tujuan transfer"
+    Category ||--o{ Transaction : kategori
     Category ||--o{ Budget : "target anggaran"
-
+    RecurringTransaction ||--o{ Transaction : menghasilkan
     Transaction ||--o{ TransactionItem : "rincian item"
 
     User {
         uuid id PK
         string email UK
-        string name
-        datetime createdAt
+        string passwordHash
+        datetime emailVerifiedAt
+        bool isDemo
+        int sessionVersion
     }
-
     Wallet {
         uuid id PK
         uuid userId FK
         string name
         decimal balance
     }
-
-    Category {
-        uuid id PK
-        uuid userId FK
-        string name
-        string icon
-        string color
-    }
-
     Transaction {
         uuid id PK
-        uuid userId FK
         uuid walletId FK
+        uuid toWalletId FK
         uuid categoryId FK
+        uuid recurringId FK
+        enum type "EXPENSE|INCOME|TRANSFER"
         decimal amount
-        enum type "EXPENSE | INCOME"
         datetime date
-        string merchantName
-        string receiptImageUrl
-        json rawOcrData
+        string receiptImageUrl "path storage"
     }
-
-    TransactionItem {
+    RecurringTransaction {
         uuid id PK
-        uuid transactionId FK
-        string name
-        decimal price
-        int quantity
+        enum frequency
+        int interval
+        datetime startDate
+        datetime nextRunAt
+        datetime endDate
+        int occurrences
+        bool active
     }
-
     Budget {
         uuid id PK
-        uuid userId FK
         uuid categoryId FK
         decimal limitAmount
         int month
         int year
     }
+    AuthToken {
+        uuid id PK
+        enum type
+        string tokenHash UK
+        datetime expiresAt
+        datetime usedAt
+    }
+    RateLimit {
+        string key PK
+        int count
+        datetime windowStart
+    }
 ```
 
+Migrasi ada di `packages/database/prisma/migrations/` (`0_init` = skema awal, lalu perubahan berikutnya).
+
+## 🧮 Aturan Saldo
+
+Semua perubahan saldo berasal dari satu fungsi (`lib/server/domain/balance.ts`) dan diterapkan dengan **increment atomik**, sehingga transaksi yang berjalan bersamaan tidak saling menimpa:
+
+| Jenis | Efek |
+|---|---|
+| `EXPENSE` | kantong − jumlah |
+| `INCOME` | kantong + jumlah |
+| `TRANSFER` | kantong asal − jumlah, kantong tujuan + jumlah |
+
+Mengedit transaksi menerapkan selisih (efek baru − efek lama) dengan baris transaksi dikunci (`SELECT … FOR UPDATE`); menghapus transaksi membalik efeknya. Kejadian transaksi berulang "diklaim" secara atomik sehingga tidak pernah tercatat ganda.
+
 ---
 
-## 🔒 Aturan Integritas Dompet Atomik (`prisma.$transaction`)
+## 🛠️ Menjalankan Proyek
 
-1. **Pembuatan Transaksi (`createTransaction`):**
-   - Jika bertipe `EXPENSE`: Saldo dompet berkurang sebesar `amount`.
-   - Jika bertipe `INCOME`: Saldo dompet bertambah sebesar `amount`.
-2. **Pembaruan Transaksi (`updateTransaction`):**
-   - Efek mutasi lama dibatalkan (*reverted*).
-   - Efek mutasi baru diaplikasikan (*applied*), mendukung pemindahan antar dompet yang berbeda tanpa ketidakkonsistenan saldo.
-3. **Penghapusan Transaksi (`deleteTransaction`):**
-   - Transaksi dibatalkan secara atomik dan saldo dompet dikembalikan ke posisi semula sebelum data transaksi dihapus.
-
----
-
-## 🛠️ Panduan Menjalankan Proyek
-
-### 1. Klon & Pasang Dependensi
-```powershell
-cd C:\Users\dandy\.gemini\antigravity\scratch\finance-tracker
+### 1. Pasang dependensi
+```bash
 pnpm install
 ```
 
-### 2. Konfigurasi Lingkungan (`.env`)
-Salin berkas `.env.example` ke `.env`:
-```powershell
+### 2. Konfigurasi `.env`
+```bash
 cp .env.example .env
 ```
-Isi variabel berikut:
-```env
-# Database PostgreSQL (Supabase / Neon)
-DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres"
+Minimal untuk produksi: `SESSION_SECRET`, `DATABASE_URL`/`DIRECT_URL`, `APP_URL`. Lihat komentar di `.env.example` untuk Supabase Storage, Gemini, email (Resend), cron, dan Sentry.
 
-# Supabase Storage
-NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT-ID].supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
-SUPABASE_RECEIPT_BUCKET="receipts"
+Tanpa `DATABASE_URL`, aplikasi berjalan di **mode memori** (cocok untuk mencoba lokal): data hilang saat server restart, dan aplikasi menampilkan pemberitahuan tentang hal itu.
 
-# Vision AI Engine (Google Gemini Flash)
-GEMINI_API_KEY="AIzaSy..."
-GEMINI_MODEL="gemini-1.5-flash"
-```
-*(Catatan: FinTrack dilengkapi **DemoStore lokal** & **Mock AI Mode** otomatis jika API Key atau Database belum dikonfigurasi, sehingga aplikasi dapat dicoba langsung tanpa setup cloud).*
-
-### 3. Migrasi & Seeding Basis Data
-```powershell
-pnpm --filter @fintrack/database db:push
-npx tsx packages/database/prisma/seed.ts
+### 3. Database
+```bash
+pnpm db:deploy          # terapkan semua migrasi
+pnpm --filter @fintrack/database db:seed   # opsional: akun lokal dandy@example.com / password123
 ```
 
-### 4. Menjalankan Web Dashboard
-```powershell
+### 4. Web
+```bash
 pnpm --filter @fintrack/web dev
 ```
-Akses di browser: **`http://localhost:3000`**
+Buka `http://localhost:3000`.
 
-### 5. Menjalankan Mobile App (Expo)
-```powershell
+### 5. Mobile (Expo)
+```bash
 pnpm --filter @fintrack/mobile start
 ```
-Pindai QR code via aplikasi **Expo Go** di Android/iOS atau jalankan di simulator/emulator.
+Atur `EXPO_PUBLIC_API_URL` ke alamat server web. Untuk BlueStacks: `apps/mobile/scripts/connect-bluestacks.ps1 -ExpoUrl exp://<IP-LAN>:8081`.
 
 ---
 
-## 🧪 Validasi & Pengujian
+## 🧪 Pengujian
 
-- **Verifikasi Skema Zod:**
-  ```powershell
-  npx tsx verify-phase1.ts
-  ```
-- **Typecheck Bebas Error Seluruh Monorepo:**
-  ```powershell
-  pnpm -r exec tsc --noEmit
-  ```
-- **Kompilasi Build Produksi Turborepo:**
-  ```powershell
-  pnpm build
-  ```
-  *(Status: 3/3 packages build successful in <20s)*
+```bash
+pnpm typecheck                       # shared, database, web
+pnpm --filter @fintrack/web lint     # ESLint (next/core-web-vitals)
+pnpm test                            # unit + kontrak store + API (store memori)
+TEST_DATABASE_URL=postgresql://…/fintrack_test pnpm test:integration   # kontrak store + API di PostgreSQL
+```
+
+- **Kontrak store** (`tests/store/contract.ts`): rangkaian tes yang sama dijalankan untuk memori dan PostgreSQL — termasuk 25 transaksi paralel, dua edit bersamaan, dan pemrosesan transaksi berulang yang bersamaan.
+- **API** (`tests/api/api.test.ts`): memastikan **setiap** route privat menolak permintaan tanpa sesi, serta alur registrasi, login, rate limit, reset kata sandi, demo terisolasi, pemindaian struk, transfer, anggaran, transaksi berulang, dan ekspor CSV.
+- `TEST_DATABASE_URL` harus menunjuk database yang namanya mengandung "test" (isinya dikosongkan setiap tes).
+
+CI (`.github/workflows/ci.yml`, `.gitlab-ci.yml`) menjalankan typecheck, lint, tes unit, migrasi + cek *drift* skema, tes integrasi PostgreSQL, dan build.
+
+---
+
+## 🎨 Sistem Desain Web — "Aurora Ledger"
+
+Tata letak tenang yang mengutamakan angka, dengan sedikit momen visual khas (aurora pada saldo, kartu kantong yang miring mengikuti kursor, dan sinar pemindai struk).
+
+| Lapisan | Lokasi | Isi |
+|---|---|---|
+| Token desain | `apps/web/app/globals.css`, `tailwind.config.ts` | Warna berbasis peran (`surface`, `fg`, `brand`, `ai`, `positive`, `negative`, `warning`) untuk mode terang & gelap. |
+| Komponen dasar | `apps/web/components/ui/` | Button, Field, AmountInput, Money (mode privasi + animasi angka), Dialog/Sheet/Drawer responsif (Radix + vaul), ConfirmDialog, SegmentedControl, Skeleton, EmptyState. |
+| Data | `apps/web/lib/api/` | Klien bertipe + hook TanStack Query; layout aplikasi melakukan *prefetch* di server. |
+| Format & i18n | `apps/web/lib/format.ts`, `lib/i18n/` | Format Rupiah/tanggal terpusat; seluruh teks EN/ID ada di kamus (paritas dijaga oleh TypeScript). |
+| Grafik | `components/reports`, `components/dashboard/charts.tsx` | Pasangan warna biru/oranye yang lolos uji buta warna di kedua tema, dengan legenda, tooltip, dan tabel. |
+
+**Fitur UX:** daftar transaksi per hari dengan *infinite scroll* · detail transaksi dengan ubah/hapus + *Undo* · pemindai struk dengan seret-lepas, tempel, dan kamera · pemilih bulan · mode privasi saldo · palet perintah (`⌘K`) dan pintasan `N`, `S`, `/` · navigasi bawah di ponsel dengan menu "Lainnya".

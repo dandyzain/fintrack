@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, Trash2 } from "lucide-react";
+import { Receipt, Repeat, Trash2 } from "lucide-react";
 import type { Transaction } from "@/lib/api/client";
 import { useLanguage } from "@/context/language-context";
 import { useAppActions } from "@/context/app-actions-context";
-import { localizeCategoryName, localizeTransactionNote, localizeWalletName } from "@/lib/i18n/translations";
+import { fmt, localizeCategoryName, localizeTransactionNote, localizeWalletName } from "@/lib/i18n/translations";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Money } from "@/components/ui/money";
@@ -28,10 +28,17 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
   const { t, language } = useLanguage();
   const { openDetail, openReceipt } = useAppActions();
   const isIncome = tx.type === "INCOME";
-  const title = tx.merchantName || (isIncome ? t.detail.income : t.detail.expense);
+  const isTransfer = tx.type === "TRANSFER";
+  const title = tx.merchantName || (isTransfer ? t.transactions.transfer : isIncome ? t.detail.income : t.detail.expense);
   const note = localizeTransactionNote(tx.notes, language);
   const category = tx.category ? localizeCategoryName(tx.category.name, language) : null;
-  const walletName = localizeWalletName(tx.wallet?.name, language);
+  const walletName = isTransfer
+    ? fmt(t.transactions.transferBetween, {
+        from: localizeWalletName(tx.wallet?.name, language),
+        to: localizeWalletName(tx.toWallet?.name, language),
+      })
+    : localizeWalletName(tx.wallet?.name, language);
+  const hasReceipt = Boolean(tx.hasReceipt ?? tx.receiptImageUrl);
 
   return (
     <div
@@ -46,12 +53,13 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`${t.transactions.openDetails}: ${title}`}
       />
-      <CategoryBubble icon={tx.category?.icon} color={tx.category?.color} income={isIncome} />
+      <CategoryBubble icon={tx.category?.icon} color={tx.category?.color} income={isIncome} transfer={isTransfer} />
 
       <div className="pointer-events-none relative min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-semibold text-fg">{title}</p>
-          {tx.receiptImageUrl && (
+          {tx.recurringId && <Repeat className="size-3.5 shrink-0 text-fg-subtle" aria-label={t.transactions.recurringBadge} role="img" />}
+          {hasReceipt && (
             <>
               <Badge tone="ai" className="hidden px-1.5 py-0 sm:inline-flex">
                 <Receipt aria-hidden />
@@ -65,7 +73,7 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
         <p className="mt-0.5 truncate text-xs text-fg-subtle @3xl:hidden">
           {[
             showDate ? formatDate(tx.date, language, "short") : null,
-            category ?? (isIncome ? null : t.transactions.uncategorized),
+            category ?? (isIncome || isTransfer ? null : t.transactions.uncategorized),
             walletName,
             note || null,
           ]
@@ -84,7 +92,7 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
             <span className="truncate">{category}</span>
           </span>
         ) : (
-          <span className="text-xs text-fg-subtle">{isIncome ? "—" : t.transactions.uncategorized}</span>
+          <span className="text-xs text-fg-subtle">{isIncome || isTransfer ? "—" : t.transactions.uncategorized}</span>
         )}
       </div>
       <div className="pointer-events-none relative hidden w-36 shrink-0 truncate text-sm text-fg-muted @3xl:block">
@@ -120,8 +128,8 @@ export function TransactionRow({ tx, onDelete, showDate = true, dense = false }:
 
       <Money
         value={tx.amount}
-        direction={isIncome ? "in" : "out"}
-        tone={isIncome ? "positive" : "neutral"}
+        direction={isTransfer ? undefined : isIncome ? "in" : "out"}
+        tone={isIncome ? "positive" : isTransfer ? "inherit" : "neutral"}
         className="pointer-events-none relative shrink-0 text-right text-sm font-semibold"
       />
     </div>

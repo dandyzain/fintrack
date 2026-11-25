@@ -15,6 +15,9 @@ interface ConfirmDialogProps {
   cancelLabel: string;
   onConfirm: () => void;
   destructive?: boolean;
+  /** Extra controls (e.g. options) shown between the description and the buttons. */
+  children?: React.ReactNode;
+  confirmDisabled?: boolean;
 }
 
 /** Accessible replacement for window.confirm (focus starts on Cancel). */
@@ -27,6 +30,8 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   destructive = true,
+  children,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   return (
     <AlertPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -52,11 +57,13 @@ export function ConfirmDialog({
           <AlertPrimitive.Description className="mt-2 text-sm leading-relaxed text-fg-muted">
             {description}
           </AlertPrimitive.Description>
+          {children && <div className="mt-4">{children}</div>}
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <AlertPrimitive.Cancel className={buttonVariants({ variant: "outline" })}>{cancelLabel}</AlertPrimitive.Cancel>
             <AlertPrimitive.Action
               className={buttonVariants({ variant: destructive ? "danger" : "primary" })}
               onClick={onConfirm}
+              disabled={confirmDisabled}
             >
               {confirmLabel}
             </AlertPrimitive.Action>

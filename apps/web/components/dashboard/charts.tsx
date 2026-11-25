@@ -26,9 +26,10 @@ import { fmt, localizeCategoryName } from "@/lib/i18n/translations";
 import { formatCompact, formatIDR, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+/* Same colour-blind-safe pair as Reports (green/red failed the deuteranopia check: ΔE 5.6). */
 const palette = {
-  light: { income: "#10B981", expense: "#F43F5E", grid: "#E6E9F1", tick: "#646B82", cursor: "#CBD0DD", surface: "#FFFFFF" },
-  dark: { income: "#34D399", expense: "#FB7185", grid: "#212940", tick: "#868FA9", cursor: "#323D5A", surface: "#0E1320" },
+  light: { income: "#257de0", expense: "#f47230", grid: "#E6E9F1", tick: "#646B82", cursor: "#CBD0DD", surface: "#FFFFFF" },
+  dark: { income: "#338ced", expense: "#e76624", grid: "#212940", tick: "#868FA9", cursor: "#323D5A", surface: "#0E1320" },
 };
 
 export function CashflowChart({ data }: { data: DailyExpenseTrend[] }) {

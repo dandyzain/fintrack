@@ -11,90 +11,124 @@ generator client {
 enum TransactionType {
   EXPENSE
   INCOME
+  /// Moves money from `walletId` to `toWalletId`. Not counted as income or spending.
+  TRANSFER
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum AuthTokenType {
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
 }
 
 model User {
-  id           String        @id @default(uuid()) @db.Uuid
-  email        String        @unique
-  name         String
-  passwordHash String?       @map("password_hash")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  name            String
+  passwordHash    String?   @map("password_hash")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  /// Throw-away sandbox account created by the "Try the demo" button.
+  isDemo          Boolean   @default(false) @map("is_demo")
+  /// Bumped to revoke every session (password change/reset, "sign out everywhere").
+  sessionVersion  Int       @default(0) @map("session_version")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  wallets      Wallet[]
-  categories   Category[]
-  transactions Transaction[]
-  budgets      Budget[]
+  wallets        Wallet[]
+  categories     Category[]
+  transactions   Transaction[]
+  budgets        Budget[]
+  recurringRules RecurringTransaction[]
+  authTokens     AuthToken[]
 
+  @@index([isDemo, createdAt])
   @@map("users")
 }
 
 model Wallet {
-  id           String        @id @default(uuid()) @db.Uuid
-  userId       String        @map("user_id") @db.Uuid
-  name         String
-  balance      Decimal       @default(0) @db.Decimal(18, 2)
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  balance   Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  incomingTransfers    Transaction[]          @relation("TransferTarget")
+  recurringRules       RecurringTransaction[]
+  recurringTransfersIn RecurringTransaction[] @relation("RecurringTransferTarget")
 
   @@index([userId])
   @@map("wallets")
 }
 
 model Category {
-  id           String        @id @default(uuid()) @db.Uuid
-  userId       String?       @map("user_id") @db.Uuid
-  name         String
-  icon         String        // Lucide icon identifier, e.g. "utensils", "car", "shopping-cart"
-  color        String        // Hex color code, e.g. "#EF4444"
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  name      String
+  icon      String // Lucide icon identifier, e.g. "Utensils", "Car", "ShoppingCart"
+  color     String // Hex color code, e.g. "#EF4444"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  budgets      Budget[]
+  user           User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  budgets        Budget[]
+  recurringRules RecurringTransaction[]
 
   @@index([userId])
   @@map("categories")
 }
 
 model Transaction {
-  id              String            @id @default(uuid()) @db.Uuid
-  userId          String            @map("user_id") @db.Uuid
-  walletId        String            @map("wallet_id") @db.Uuid
-  categoryId      String?           @map("category_id") @db.Uuid
-  amount          Decimal           @db.Decimal(18, 2)
+  id              String          @id @default(uuid()) @db.Uuid
+  userId          String          @map("user_id") @db.Uuid
+  walletId        String          @map("wallet_id") @db.Uuid
+  /// Destination pocket, only for TRANSFER.
+  toWalletId      String?         @map("to_wallet_id") @db.Uuid
+  categoryId      String?         @map("category_id") @db.Uuid
+  recurringId     String?         @map("recurring_id") @db.Uuid
+  amount          Decimal         @db.Decimal(18, 2)
   type            TransactionType
-  date            DateTime          @db.Timestamptz(6)
-  merchantName    String?           @map("merchant_name")
+  date            DateTime        @db.Timestamptz(6)
+  merchantName    String?         @map("merchant_name")
   notes           String?
-  receiptImageUrl String?           @map("receipt_image_url")
-  rawOcrData      Json?             @map("raw_ocr_data")
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  /// Storage path of the receipt image (served through short-lived signed URLs).
+  receiptImageUrl String?         @map("receipt_image_url")
+  rawOcrData      Json?           @map("raw_ocr_data")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  items           TransactionItem[]
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet    Wallet                @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  toWallet  Wallet?               @relation("TransferTarget", fields: [toWalletId], references: [id], onDelete: Restrict)
+  category  Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recurring RecurringTransaction? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+  items     TransactionItem[]
 
   @@index([userId, date])
   @@index([walletId])
+  @@index([toWalletId])
   @@index([categoryId])
+  @@index([recurringId])
   @@map("transactions")
 }
 
 model TransactionItem {
-  id            String      @id @default(uuid()) @db.Uuid
-  transactionId String      @map("transaction_id") @db.Uuid
+  id            String  @id @default(uuid()) @db.Uuid
+  transactionId String  @map("transaction_id") @db.Uuid
   name          String
-  price         Decimal     @db.Decimal(18, 2)
-  quantity      Int         @default(1)
+  price         Decimal @db.Decimal(18, 2)
+  quantity      Int     @default(1)
 
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@index([transactionId])
   @@map("transaction_items")
@@ -105,15 +139,74 @@ model Budget {
   userId      String   @map("user_id") @db.Uuid
   categoryId  String   @map("category_id") @db.Uuid
   limitAmount Decimal  @map("limit_amount") @db.Decimal(18, 2)
-  month       Int      // 1 - 12
+  month       Int // 1 - 12
   year        Int
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId, month, year])
   @@index([userId, month, year])
   @@map("budgets")
+}
+
+/// A rule that creates a transaction on a schedule (salary, subscriptions, instalments).
+model RecurringTransaction {
+  id           String              @id @default(uuid()) @db.Uuid
+  userId       String              @map("user_id") @db.Uuid
+  walletId     String              @map("wallet_id") @db.Uuid
+  toWalletId   String?             @map("to_wallet_id") @db.Uuid
+  categoryId   String?             @map("category_id") @db.Uuid
+  type         TransactionType
+  amount       Decimal             @db.Decimal(18, 2)
+  merchantName String?             @map("merchant_name")
+  notes        String?
+  frequency    RecurrenceFrequency
+  interval     Int                 @default(1)
+  /// Day the schedule is anchored to (keeps "31st of every month" stable).
+  startDate    DateTime            @map("start_date") @db.Timestamptz(6)
+  nextRunAt    DateTime            @map("next_run_at") @db.Timestamptz(6)
+  endDate      DateTime?           @map("end_date") @db.Timestamptz(6)
+  occurrences  Int                 @default(0)
+  active       Boolean             @default(true)
+  lastRunAt    DateTime?           @map("last_run_at") @db.Timestamptz(6)
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet       Wallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  toWallet     Wallet?       @relation("RecurringTransferTarget", fields: [toWalletId], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([active, nextRunAt])
+  @@map("recurring_transactions")
+}
+
+/// One-time tokens for password reset and email verification (only the SHA-256 hash is stored).
+model AuthToken {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  type      AuthTokenType
+  tokenHash String        @unique @map("token_hash")
+  expiresAt DateTime      @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime?     @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("auth_tokens")
+}
+
+/// Fixed-window counters shared by every server instance (login, scans, demo sign-ups).
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+
+  @@map("rate_limits")
 }

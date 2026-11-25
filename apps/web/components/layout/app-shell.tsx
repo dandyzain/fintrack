@@ -14,6 +14,7 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { BottomNav } from "./bottom-nav";
 import { GlobalOverlays } from "./global-overlays";
+import { AccountBanners } from "./account-banners";
 
 const COLLAPSE_KEY = "fintrack-sidebar-collapsed";
 
@@ -93,12 +94,13 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
           !collapsed && "lg:pl-60"
         )}
       >
-        {me.data ? <TopBar user={me.data} /> : <TopBarSkeleton />}
+        {me.data ? <TopBar user={me.data.user} /> : <TopBarSkeleton />}
         <main
           id="main"
           tabIndex={-1}
           className="mx-auto max-w-[1440px] px-4 pb-[calc(var(--bottom-nav-h)+2.5rem)] pt-2 focus:outline-none sm:px-6 lg:px-8"
         >
+          {me.data && <AccountBanners me={me.data} />}
           {children}
         </main>
       </div>

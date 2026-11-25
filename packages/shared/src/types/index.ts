@@ -2,6 +2,8 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+  /** Machine-readable error code, e.g. "UNAUTHORIZED", "RATE_LIMITED". */
+  code?: string;
   message?: string;
   details?: unknown;
 }
@@ -26,6 +28,9 @@ export interface CategoryBudgetComparison {
   remainingBudget: number;
   percentageUsed: number;
   isOverBudget: boolean;
+  /** False for categories with spending but no budget set (they are never "over"). */
+  hasBudget: boolean;
+  budgetId?: string | null;
 }
 
 export interface DailyExpenseTrend {
@@ -76,4 +81,44 @@ export interface DashboardAnalyticsResponse {
   metrics?: FinancialMetrics;
   categoryBreakdown?: CategorySpendingBreakdown[];
   financialHealth?: FinancialHealth;
+}
+
+/* ---------- Reports (multi-month) ---------- */
+
+export interface MonthlyReportPoint {
+  month: number;
+  year: number;
+  /** YYYY-MM */
+  key: string;
+  income: number;
+  expense: number;
+  net: number;
+  /** Net savings as a share of income (0 when there is no income). */
+  savingsRate: number;
+}
+
+export interface ReportCategoryTotal {
+  categoryId: string | null;
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+  total: number;
+  percentage: number;
+  /** Monthly totals aligned with `months`. */
+  series: number[];
+}
+
+export interface ReportResponse {
+  months: MonthlyReportPoint[];
+  categories: ReportCategoryTotal[];
+  totals: {
+    income: number;
+    expense: number;
+    net: number;
+    averageMonthlyIncome: number;
+    averageMonthlyExpense: number;
+    savingsRate: number;
+    bestMonth: string | null;
+    worstMonth: string | null;
+  };
 }

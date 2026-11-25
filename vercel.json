@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm --filter @fintrack/database db:generate && pnpm --filter @fintrack/web build",
   "outputDirectory": "apps/web/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/recurring",
+      "schedule": "17 1 * * *"
+    }
+  ]
 }

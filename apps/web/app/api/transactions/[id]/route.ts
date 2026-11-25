@@ -1,90 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import { TransactionService } from "@/lib/services/transaction.service";
-import { getCurrentUserId } from "@/lib/auth";
-import { UpdateTransactionSchema, type ApiResponse } from "@fintrack/shared";
+import { UpdateTransactionSchema } from "@fintrack/shared";
+import { withUser } from "@/lib/server/auth";
+import { notFound } from "@/lib/server/errors";
+import { ok, parse, readJson } from "@/lib/server/http";
+import { getStore } from "@/lib/server/store";
+import { deleteTransaction, serializeTransactions, toTransactionPatch } from "@/lib/server/services/transactions";
 
 export const dynamic = "force-dynamic";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+type Params = { id: string };
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const userId = await getCurrentUserId(request);
-    const transaction = await TransactionService.getTransactionById(params.id, userId);
+export const GET = withUser<Params>(async (_request, { user, params }) => {
+  const tx = await getStore().getTransaction(user.id, params.id);
+  if (!tx) throw notFound("Transaksi tidak ditemukan.");
+  const [data] = await serializeTransactions([tx]);
+  return ok(data);
+});
 
-    if (!transaction) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Transaksi tidak ditemukan." },
-        { status: 404 }
-      );
-    }
+const update = withUser<Params>(async (request, { user, params }) => {
+  const body = (await readJson(request)) as Record<string, unknown>;
+  const input = parse(UpdateTransactionSchema, { ...body, id: params.id });
+  const updated = await getStore().updateTransaction(user.id, params.id, toTransactionPatch(input, user.id));
+  const [data] = await serializeTransactions([updated]);
+  return ok(data, { message: "Transaksi berhasil diperbarui dan saldo kantong disesuaikan." });
+});
 
-    return NextResponse.json<ApiResponse>({ success: true, data: transaction });
-  } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
+export const PUT = update;
+export const PATCH = update;
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const userId = await getCurrentUserId(request);
-    const body = await request.json();
-
-    const validated = UpdateTransactionSchema.safeParse({
-      ...body,
-      id: params.id,
-    });
-
-    if (!validated.success) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Validasi update transaksi gagal.",
-          details: validated.error.format(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const updated = await TransactionService.updateTransaction({
-      ...validated.data,
-      userId,
-    });
-
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: updated,
-      message: "Transaksi berhasil diperbarui dan penyesuaian saldo dompet telah disinkronkan.",
-    });
-  } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const userId = await getCurrentUserId(request);
-    const result = await TransactionService.deleteTransaction(params.id, userId);
-
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: result,
-      message: "Transaksi berhasil dihapus dan saldo dompet telah dikembalikan secara atomik.",
-    });
-  } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
+export const DELETE = withUser<Params>(async (_request, { user, params }) =>
+  ok(await deleteTransaction(user.id, params.id), { message: "Transaksi dihapus dan saldo kantong dikembalikan." })
+);

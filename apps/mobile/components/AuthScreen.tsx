@@ -41,8 +41,8 @@ export function AuthScreen() {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setErrorMessage("Kata sandi minimal 6 karakter.");
+    if (!password || (mode === "register" && password.length < 8)) {
+      setErrorMessage(mode === "register" ? "Kata sandi minimal 8 karakter." : "Kata sandi wajib diisi.");
       return;
     }
 
@@ -325,7 +325,7 @@ export function AuthScreen() {
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Minimal 6 karakter"
+                  placeholder={mode === "register" ? "Minimal 8 karakter" : "Kata sandi"}
                   placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"

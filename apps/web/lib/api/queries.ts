@@ -9,18 +9,28 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { endpoints, type Transaction, type TransactionInput, type TransactionPage, type TransactionQuery } from "./client";
+import {
+  endpoints,
+  type RecurringInput,
+  type Transaction,
+  type TransactionInput,
+  type TransactionPage,
+  type TransactionQuery,
+  type WalletDeleteOption,
+} from "./client";
 import type { Period } from "@/lib/period";
 import { useLanguage } from "@/context/language-context";
 
 import { queryKeys } from "./keys";
 export { queryKeys };
 
-/** Anything that changes money refreshes balances, analytics and lists. */
+/** Anything that changes money refreshes balances, analytics, reports and lists. */
 export function invalidateFinance(qc: QueryClient) {
   return Promise.all([
     qc.invalidateQueries({ queryKey: queryKeys.wallets }),
     qc.invalidateQueries({ queryKey: ["analytics"] }),
+    qc.invalidateQueries({ queryKey: ["report"] }),
+    qc.invalidateQueries({ queryKey: ["budgets"] }),
     qc.invalidateQueries({ queryKey: queryKeys.transactions }),
     qc.invalidateQueries({ queryKey: ["transaction"] }),
   ]);
@@ -101,11 +111,115 @@ export function useCreateWallet() {
   });
 }
 
+export function useUpdateWallet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: { name?: string; balance?: number } }) => endpoints.updateWallet(id, input),
+    onSuccess: () => invalidateFinance(qc),
+  });
+}
+
 export function useDeleteWallet() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => endpoints.deleteWallet(id),
+    mutationFn: ({ id, option }: { id: string; option?: WalletDeleteOption }) => endpoints.deleteWallet(id, option),
+    onSuccess: () => Promise.all([invalidateFinance(qc), qc.invalidateQueries({ queryKey: queryKeys.recurring })]),
+  });
+}
+
+/* ---------- categories ---------- */
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: endpoints.createCategory,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories }),
+  });
+}
+
+export function useUpdateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<{ name: string; icon: string; color: string }> }) =>
+      endpoints.updateCategory(id, input),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: queryKeys.categories }), invalidateFinance(qc)]),
+  });
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => endpoints.deleteCategory(id),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: queryKeys.categories }), invalidateFinance(qc)]),
+  });
+}
+
+/* ---------- budgets ---------- */
+
+export function useBudgets(period: Period) {
+  return useQuery({
+    queryKey: queryKeys.budgets(period),
+    queryFn: () => endpoints.budgets(period.month, period.year),
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useUpsertBudget() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: endpoints.upsertBudget, onSuccess: () => invalidateFinance(qc) });
+}
+
+export function useDeleteBudget() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: (id: string) => endpoints.deleteBudget(id), onSuccess: () => invalidateFinance(qc) });
+}
+
+export function useCopyBudgets() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ from, to }: { from: Period; to: Period }) => endpoints.copyBudgets(from, to),
     onSuccess: () => invalidateFinance(qc),
+  });
+}
+
+/* ---------- recurring ---------- */
+
+export function useRecurring() {
+  return useQuery({ queryKey: queryKeys.recurring, queryFn: endpoints.recurring });
+}
+
+export function useCreateRecurring() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RecurringInput) => endpoints.createRecurring(input),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: queryKeys.recurring }), invalidateFinance(qc)]),
+  });
+}
+
+export function useUpdateRecurring() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<{ active: boolean; amount: number; endDate: string | null }> }) =>
+      endpoints.updateRecurring(id, input),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: queryKeys.recurring }), invalidateFinance(qc)]),
+  });
+}
+
+export function useDeleteRecurring() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => endpoints.deleteRecurring(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.recurring }),
+  });
+}
+
+/* ---------- reports ---------- */
+
+export function useReport(period: Period, months: number) {
+  return useQuery({
+    queryKey: queryKeys.report(period, months),
+    queryFn: () => endpoints.report(period.month, period.year, months),
+    placeholderData: (prev) => prev,
   });
 }
 
