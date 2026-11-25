@@ -137,7 +137,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
         <header className="flex items-center justify-between gap-3 px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8">
           <span className="lg:invisible">
-            <BrandMark size={36} glow />
+            <BrandMark size={36} />
           </span>
           <div className="flex items-center gap-2">
             <LanguageToggle />

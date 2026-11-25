@@ -22,9 +22,13 @@ export const metadata: Metadata = {
   description:
     "Smart personal finance and expense tracker with automatic receipt scanning powered by Vision AI.",
   icons: {
-    icon: "/icon.png",
+    // Crisp SVG favicon first; PNG fallback for browsers without SVG favicon support.
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
     shortcut: "/icon.png",
-    apple: "/icon.png",
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
 };
 

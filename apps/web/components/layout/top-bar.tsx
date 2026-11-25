@@ -36,7 +36,7 @@ export function TopBar({ user }: { user: AuthUser }) {
     >
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-2 px-4 sm:px-6 lg:px-8">
         <Link href="/" aria-label="FinTrack" className="mr-1 rounded-xl md:hidden">
-          <BrandMark size={32} glow />
+          <BrandMark size={32} />
         </Link>
 
         <PeriodSwitcher />
