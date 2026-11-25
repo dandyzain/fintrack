@@ -1,151 +1,65 @@
-import { NextRequest, NextResponse } from "next/server";
-import { uploadReceiptToStorage } from "@/lib/storage/supabase";
-import { extractReceiptFromImage } from "@/lib/ai/vision";
-import { ReceiptExtractionSchema, type ApiResponse } from "@fintrack/shared";
-
-// Max upload size: 10 MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
+import { ReceiptExtractionSchema } from "@fintrack/shared";
+import { withUser } from "@/lib/server/auth";
+import { HttpError, badRequest, serviceUnavailable } from "@/lib/server/errors";
+import { ok } from "@/lib/server/http";
+import { log } from "@/lib/server/logger";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { MAX_RECEIPT_BYTES, detectImageType, resolveReceiptUrl, uploadReceipt } from "@/lib/server/receipts";
+import { VisionNotConfiguredError, extractReceiptFromImage } from "@/lib/ai/vision";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
-export async function POST(request: NextRequest) {
-  try {
-    const contentType = request.headers.get("content-type") || "";
-    if (!contentType.includes("multipart/form-data")) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Content-Type request harus berupa multipart/form-data.",
-        },
-        { status: 400 }
-      );
-    }
+/**
+ * Extracts a receipt with Vision AI and stores the image privately. Nothing is
+ * written to the ledger here: the client reviews the result and then creates
+ * the transaction (sending back `receiptImageUrl`).
+ */
+export const POST = withUser(async (request, { user }) => {
+  await enforceRateLimit("scan", user.id);
 
-    const formData = await request.formData();
-    // Accept file from field 'file', 'receipt', or 'image'
-    const file =
-      (formData.get("file") as File | null) ||
-      (formData.get("receipt") as File | null) ||
-      (formData.get("image") as File | null);
-
-    if (!file) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "File struk tidak ditemukan. Pastikan field bernama 'file', 'receipt', atau 'image'.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate mime type
-    if (!ALLOWED_MIME_TYPES.includes(file.type) && !file.type.startsWith("image/")) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: `Format file tidak didukung: ${file.type}. Gunakan format gambar JPG, PNG, atau WebP.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: `Ukuran file melebihi batas maksimum 10MB (${(file.size / (1024 * 1024)).toFixed(2)} MB).`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const userId = (formData.get("userId") as string | null) || "anonymous";
-
-    // Read file buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // 1. Upload to Supabase Storage Bucket ('receipts')
-    let storageResult;
-    try {
-      storageResult = await uploadReceiptToStorage(
-        buffer,
-        file.name || "receipt.jpg",
-        file.type || "image/jpeg",
-        userId
-      );
-    } catch (storageErr) {
-      console.error("Storage upload error:", storageErr);
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: `Gagal mengunggah struk ke media penyimpanan: ${(storageErr as Error).message}`,
-        },
-        { status: 500 }
-      );
-    }
-
-    // 2. Invoke Vision LLM AI Extraction Engine
-    let extractedData;
-    try {
-      extractedData = await extractReceiptFromImage(buffer, file.type || "image/jpeg");
-    } catch (aiErr) {
-      console.error("Vision AI extraction error:", aiErr);
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: `Gagal memproses struk dengan Vision AI: ${(aiErr as Error).message}`,
-        },
-        { status: 422 }
-      );
-    }
-
-    // 3. Validate extraction contract using Zod schema
-    const validationResult = ReceiptExtractionSchema.safeParse(extractedData);
-    if (!validationResult.success) {
-      const errorDetails = validationResult.error.format();
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Hasil ekstraksi AI tidak memenuhi skema kontrak data.",
-          details: errorDetails,
-        },
-        { status: 422 }
-      );
-    }
-
-    // 4. Return extracted data for User Review & Confirmation
-    // CRITICAL: We do NOT persist directly to database here. The client must review first!
-    return NextResponse.json<ApiResponse>(
-      {
-        success: true,
-        data: {
-          extractedData: validationResult.data,
-          receiptImageUrl: storageResult.publicUrl,
-          storagePath: storageResult.storagePath,
-          fileName: file.name,
-          fileSize: file.size,
-        },
-        message: "Struk belanja berhasil diekstrak. Silakan periksa dan konfirmasi data transaksi.",
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Unexpected error in /api/receipts/scan:", error);
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: `Terjadi kesalahan internal pada server: ${(error as Error).message}`,
-      },
-      { status: 500 }
-    );
+  if (!(request.headers.get("content-type") || "").includes("multipart/form-data")) {
+    throw badRequest("Content-Type harus multipart/form-data.");
   }
-}
+  const form = await request.formData();
+  const file = (form.get("file") || form.get("receipt") || form.get("image")) as File | null;
+  if (!file || typeof file === "string") throw badRequest("File struk tidak ditemukan. Kirim gambar pada field 'file'.");
+  if (file.size > MAX_RECEIPT_BYTES) {
+    throw badRequest(`Ukuran file melebihi batas 10MB (${(file.size / (1024 * 1024)).toFixed(1)} MB).`);
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  // Trust the file's content, not its declared type (blocks SVG/HTML disguised as images).
+  const contentType = detectImageType(bytes);
+  if (!contentType) throw badRequest("Format file tidak didukung. Gunakan foto JPG, PNG, WebP, atau HEIC.");
+
+  let extracted;
+  try {
+    extracted = await extractReceiptFromImage(bytes, contentType);
+  } catch (err) {
+    if (err instanceof VisionNotConfiguredError) throw serviceUnavailable(err.message, "VISION_NOT_CONFIGURED");
+    log.error("vision_extraction_failed", { message: (err as Error).message });
+    throw new HttpError(422, "Struk tidak dapat dibaca. Pastikan foto jelas dan seluruh struk terlihat, lalu coba lagi.", "EXTRACTION_FAILED");
+  }
+
+  const validated = ReceiptExtractionSchema.safeParse(extracted);
+  if (!validated.success) {
+    throw new HttpError(422, "Hasil pembacaan struk tidak lengkap. Coba foto ulang atau isi transaksi secara manual.", "EXTRACTION_INVALID");
+  }
+
+  // Upload only after a successful extraction, so failed scans leave no orphan files.
+  const path = await uploadReceipt(user.id, bytes, contentType);
+  const receiptImageUrl = await resolveReceiptUrl(path);
+
+  return ok(
+    {
+      extractedData: validated.data,
+      /** Signed URL for preview; send it back as `receiptImageUrl` when saving the transaction. */
+      receiptImageUrl,
+      storagePath: path,
+      fileName: file.name,
+      fileSize: file.size,
+    },
+    { message: "Struk berhasil dibaca. Periksa dan konfirmasi data transaksi." }
+  );
+});

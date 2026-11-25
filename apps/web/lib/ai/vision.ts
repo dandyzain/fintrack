@@ -107,8 +107,10 @@ export async function extractReceiptWithGemini(
   }
 
   const base64Image = Buffer.from(imageBuffer).toString("base64");
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  // `gemini-flash-latest` always points at Google's current Flash model, so the
+  // app keeps working when a specific version (e.g. gemini-1.5-flash) is retired.
+  const modelName = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent`;
 
   const requestBody = {
     contents: [
@@ -137,13 +139,16 @@ export async function extractReceiptWithGemini(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // Key in a header, not the URL, so it never ends up in proxy or access logs.
+      "x-goog-api-key": apiKey,
     },
     body: JSON.stringify(requestBody),
+    signal: AbortSignal.timeout(45_000),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Google Gemini API error (${response.status}): ${errorText}`);
+    const errorText = (await response.text()).slice(0, 500);
+    throw new Error(`Google Gemini API error (${response.status}, model ${modelName}): ${errorText}`);
   }
 
   const result = await response.json();
@@ -190,6 +195,7 @@ export async function extractReceiptWithOpenAI(
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
+    signal: AbortSignal.timeout(45_000),
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
@@ -218,7 +224,7 @@ export async function extractReceiptWithOpenAI(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText = (await response.text()).slice(0, 500);
     throw new Error(`OpenAI Vision API error (${response.status}): ${errorText}`);
   }
 
@@ -242,8 +248,37 @@ export async function extractReceiptWithOpenAI(
   return validated.data;
 }
 
+/** Thrown when no extraction engine is configured (maps to HTTP 503). */
+export class VisionNotConfiguredError extends Error {
+  constructor() {
+    super("Vision AI belum dikonfigurasi. Sediakan GEMINI_API_KEY atau OPENAI_API_KEY, atau aktifkan ENABLE_MOCK_AI=true untuk demo.");
+    this.name = "VisionNotConfiguredError";
+  }
+}
+
+export function isMockVisionEnabled(): boolean {
+  return process.env.ENABLE_MOCK_AI === "true";
+}
+
+const MOCK_EXTRACTION: ReceiptExtraction = {
+  merchantName: "Supermarket Segar Jaya",
+  date: null,
+  totalAmount: 145000,
+  tax: 14500,
+  serviceCharge: 0,
+  items: [
+    { name: "Susu UHT Full Cream 1L", price: 24000, quantity: 2 },
+    { name: "Roti Gandum Utuh", price: 18000, quantity: 1 },
+    { name: "Daging Ayam Fillet 500g", price: 42000, quantity: 1 },
+    { name: "Telur Ayam Negeri 10 Butir", price: 37000, quantity: 1 },
+  ],
+  suggestedCategory: "Belanja Bulanan",
+};
+
 /**
- * Primary Vision AI Extraction dispatcher with fallback support
+ * Primary Vision AI dispatcher: Gemini, then OpenAI as fallback. The mock
+ * extractor is used only when explicitly enabled (ENABLE_MOCK_AI=true) and no
+ * real key is configured — it is opt-in, so it also works for a hosted demo.
  */
 export async function extractReceiptFromImage(
   imageBuffer: Buffer | Uint8Array,
@@ -253,8 +288,8 @@ export async function extractReceiptFromImage(
     try {
       return await extractReceiptWithGemini(imageBuffer, mimeType);
     } catch (geminiError) {
-      console.warn("Gemini Flash extraction failed. Attempting fallback if OpenAI available:", geminiError);
       if (process.env.OPENAI_API_KEY) {
+        console.warn("Gemini extraction failed; falling back to OpenAI:", (geminiError as Error).message);
         return await extractReceiptWithOpenAI(imageBuffer, mimeType);
       }
       throw geminiError;
@@ -265,24 +300,9 @@ export async function extractReceiptFromImage(
     return await extractReceiptWithOpenAI(imageBuffer, mimeType);
   }
 
-  // Development/Mock Mode Fallback if no API key is provided
-  if (process.env.NODE_ENV !== "production" && process.env.ENABLE_MOCK_AI === "true") {
-    console.warn("No Vision AI key found. Using structured Mock Extraction for local development.");
-    return {
-      merchantName: "Supermarket Segar Jaya",
-      date: new Date().toISOString().split("T")[0],
-      totalAmount: 145000,
-      tax: 14500,
-      serviceCharge: 0,
-      items: [
-        { name: "Susu UHT Full Cream 1L", price: 24000, quantity: 2 },
-        { name: "Roti Gandum Utuh", price: 18000, quantity: 1 },
-        { name: "Daging Ayam Fillet 500g", price: 42000, quantity: 1 },
-        { name: "Telur Ayam Negeri 10 Butir", price: 37000, quantity: 1 },
-      ],
-      suggestedCategory: "Belanja Bulanan",
-    };
+  if (isMockVisionEnabled()) {
+    return { ...MOCK_EXTRACTION, date: new Date().toISOString().split("T")[0], items: MOCK_EXTRACTION.items.map((i) => ({ ...i })) };
   }
 
-  throw new Error("Vision AI API Key belum dikonfigurasi. Sediakan GEMINI_API_KEY atau OPENAI_API_KEY di file .env.");
+  throw new VisionNotConfiguredError();
 }

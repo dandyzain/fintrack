@@ -1,36 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
-import type { ApiResponse, AuthUser } from "@fintrack/shared";
+import { toAuthUser, withUser } from "@/lib/server/auth";
+import { storageMode } from "@/lib/server/config";
+import { ok } from "@/lib/server/http";
+import { isEmailConfigured } from "@/lib/server/mailer";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-
-    if (!user) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Sesi tidak ditemukan atau telah kedaluwarsa.",
-        },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json<ApiResponse<{ user: AuthUser }>>({
-      success: true,
-      data: {
-        user,
-      },
-    });
-  } catch (error) {
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: `Gagal memverifikasi sesi: ${(error as Error).message}`,
-      },
-      { status: 500 }
-    );
-  }
-}
+export const GET = withUser(async (_request, { user }) =>
+  ok({
+    user: toAuthUser(user),
+    /** "memory" means data is not persisted (no DATABASE_URL); the UI shows a notice. */
+    storage: storageMode(),
+    emailDelivery: isEmailConfigured(),
+  })
+);
