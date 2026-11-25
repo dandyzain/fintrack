@@ -7,7 +7,7 @@ import type { DailyExpenseTrend, DashboardAnalyticsResponse } from "@fintrack/sh
 import { useLanguage } from "@/context/language-context";
 import { usePrivacy } from "@/context/privacy-context";
 import { fmt } from "@/lib/i18n/translations";
-import { percentChange } from "@/lib/format";
+import { percentChange, toNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 import { Money } from "@/components/ui/money";
@@ -162,7 +162,17 @@ export function BalanceHero({
           {loading ? (
             <Skeleton className="mt-3 h-12 w-64" />
           ) : (
-            <p className="mt-1.5 text-display text-fg">
+            <p
+              // Plain string on purpose: tailwind-merge would drop `text-display` (and its weight) next to the size override.
+              className={`mt-1.5 whitespace-nowrap text-display text-fg ${
+                // Long balances (tens of millions and up) shrink instead of wrapping mid-number.
+                Math.abs(toNumber(totalBalance)) >= 1e10
+                  ? "!text-[clamp(1.6rem,1rem+2vw,2.25rem)]"
+                  : Math.abs(toNumber(totalBalance)) >= 1e7
+                  ? "!text-[clamp(1.9rem,1.2rem+2.2vw,2.75rem)]"
+                  : ""
+              }`}
+            >
               <Money value={totalBalance} animateOnView revealDelay={80} />
             </p>
           )}

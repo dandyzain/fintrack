@@ -9,6 +9,7 @@ import React, {
 import { type AuthUser } from "@fintrack/shared";
 import {
   loginApi,
+  demoLoginApi,
   registerApi,
   getMeApi,
   setAuthToken,
@@ -109,8 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const demoLogin = useCallback(async () => {
-    await login("dandy@example.com", "password123");
-  }, [login]);
+    const data = await demoLoginApi();
+    setToken(data.token);
+    setUser(data.user);
+    setAuthToken(data.token);
+    await saveStorageItem(STORAGE_KEY, JSON.stringify({ token: data.token, user: data.user }));
+  }, []);
 
   const logout = useCallback(async () => {
     setAuthToken(null);

@@ -227,6 +227,7 @@ export function computeReport(args: {
   months: number;
   transactions: TransactionRecord[];
   categories: CategoryRecord[];
+  now?: Date;
 }): ReportResponse {
   const window = monthWindow(args.endMonth, args.endYear, args.months);
   const index = new Map(window.map((w, i) => [`${w.year}-${w.month}`, i]));
@@ -268,7 +269,11 @@ export function computeReport(args: {
   const income = round2(months.reduce((s, m) => s + m.income, 0));
   const expense = round2(months.reduce((s, m) => s + m.expense, 0));
   const active = months.filter((m) => m.income > 0 || m.expense > 0);
-  const ranked = [...active].sort((a, b) => b.net - a.net);
+  // The month in progress isn't over yet, so it doesn't compete for best/toughest month.
+  const now = args.now ?? new Date();
+  const currentKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const complete = active.filter((m) => m.key < currentKey);
+  const ranked = [...(complete.length ? complete : active)].sort((a, b) => b.net - a.net);
 
   const categories: ReportCategoryTotal[] = Array.from(byCategory.entries())
     .map(([id, v]) => {

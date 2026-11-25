@@ -56,7 +56,7 @@ export async function createDemoSandbox(): Promise<UserRecord> {
   }
   const user = await store.createUser(
     {
-      name: "Pengguna Demo",
+      name: "Demo",
       email: `demo-${crypto.randomUUID()}@demo.fintrack.invalid`,
       passwordHash: null,
       isDemo: true,

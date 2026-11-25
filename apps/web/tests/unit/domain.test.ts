@@ -114,6 +114,7 @@ describe("reports", () => {
       endMonth: 12,
       endYear: 2026,
       months: 3,
+      now: d("2027-01-15"),
       categories: [{ id: "food", userId: "u", name: "Food", icon: "Utensils", color: "#f00" }],
       transactions: [
         tx({ amount: 100, categoryId: "food", date: d("2026-10-05") }),
@@ -130,6 +131,23 @@ describe("reports", () => {
     expect(r.categories[0]).toMatchObject({ categoryId: "food", total: 100, series: [100, 0, 0] });
     expect(r.categories[1]).toMatchObject({ categoryId: null, total: 50 });
     expect(r.totals).toMatchObject({ income: 400, expense: 150, bestMonth: "2026-12", worstMonth: "2026-10" });
+  });
+
+  it("keeps the month in progress out of the best/toughest ranking", () => {
+    const r = computeReport({
+      endMonth: 11,
+      endYear: 2026,
+      months: 3,
+      now: d("2026-11-05"),
+      categories: [],
+      transactions: [
+        tx({ amount: 1000, type: "INCOME", date: d("2026-09-01") }),
+        tx({ amount: 500, type: "INCOME", date: d("2026-10-01") }),
+        tx({ amount: 900, date: d("2026-11-02") }), // only 5 days in: not "toughest"
+      ],
+    });
+    expect(r.totals.bestMonth).toBe("2026-09");
+    expect(r.totals.worstMonth).toBe("2026-10");
   });
 });
 

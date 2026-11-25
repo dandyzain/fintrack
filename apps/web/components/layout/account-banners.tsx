@@ -58,15 +58,17 @@ function Banner({
     brand: "border-brand/25 bg-brand/[0.07]",
   }[tone];
   return (
-    <div role="status" className={cn("flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm", toneClass)}>
+    <div role="status" className={cn("flex items-start gap-3 rounded-2xl border px-3.5 py-3 text-sm sm:items-center sm:px-4", toneClass)}>
       <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-1 text-fg-muted [&_svg]:size-4">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-fg">{title}</p>
         <p className="text-fg-muted">{children}</p>
+        {/* On phones the action sits under the text so the text keeps its full width. */}
+        {action && <div className="mt-2 sm:hidden">{action}</div>}
       </div>
-      {action}
+      {action && <div className="hidden shrink-0 sm:block">{action}</div>}
       {onDismiss && (
         <button
           type="button"

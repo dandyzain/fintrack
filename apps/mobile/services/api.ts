@@ -68,6 +68,24 @@ export async function loginApi(
 }
 
 /**
+ * Opens a private demo sandbox (fresh sample data, expires after 24 hours)
+ */
+export async function demoLoginApi(): Promise<AuthResponseData> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/demo`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+  });
+
+  const json: ApiResponse<AuthResponseData> = await response.json();
+  if (!response.ok || !json.success || !json.data) {
+    throw new Error(json.error || "Gagal membuka akun demo.");
+  }
+
+  setAuthToken(json.data.token);
+  return json.data;
+}
+
+/**
  * Register a new user
  */
 export async function registerApi(

@@ -1,28 +1,39 @@
-image: node:20
+# Mirrors .github/workflows/ci.yml for GitLab runners.
+image: node:22
 
 stages:
-  - test
-  - build
+  - verify
+
+variables:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: fintrack_test
+  TEST_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/fintrack_test"
 
 cache:
+  key:
+    files: [pnpm-lock.yaml]
   paths:
     - .pnpm-store
 
-before_script:
-  - corepack enable
-  - corepack prepare pnpm@latest --activate
-  - pnpm config set store-dir .pnpm-store
-  - pnpm install --no-frozen-lockfile
-
-build_web:
-  stage: build
+verify:
+  stage: verify
+  services:
+    - postgres:16
+  before_script:
+    - corepack enable
+    - corepack install
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+    - pnpm --filter @fintrack/database db:generate
   script:
+    - pnpm typecheck
+    - pnpm --filter @fintrack/web lint
+    - pnpm test
+    - DATABASE_URL="$TEST_DATABASE_URL" DIRECT_URL="$TEST_DATABASE_URL" pnpm --filter @fintrack/database exec prisma migrate deploy
+    - pnpm --filter @fintrack/database exec prisma migrate diff --from-url "$TEST_DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+    - pnpm test:integration
     - pnpm --filter @fintrack/web build
-  variables:
-    NEXT_PUBLIC_SUPABASE_URL: "https://demo.supabase.co"
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: "demo-anon-key"
-    DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/fintrack"
-    ENABLE_MOCK_AI: "true"
-  only:
-    - main
-    - merge_requests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

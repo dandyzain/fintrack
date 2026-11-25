@@ -150,19 +150,27 @@ export function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
-                    {[...r.months].reverse().map((m) => (
-                      <tr key={m.key}>
-                        <th scope="row" className="px-5 py-2.5 text-left font-medium text-fg sm:px-6">
-                          {formatMonth(m.month, m.year, language)}
-                        </th>
-                        <td className="tabular px-3 py-2.5 text-right text-fg-muted">{money(m.income)}</td>
-                        <td className="tabular px-3 py-2.5 text-right text-fg-muted">{money(m.expense)}</td>
-                        <td className={cn("tabular px-3 py-2.5 text-right font-semibold", m.net >= 0 ? "text-positive-fg" : "text-negative-fg")}>
-                          {money(m.net)}
-                        </td>
-                        <td className="tabular px-5 py-2.5 text-right text-fg-muted sm:px-6">{m.income > 0 ? `${m.savingsRate}%` : "—"}</td>
-                      </tr>
-                    ))}
+                    {[...r.months].reverse().map((m) => {
+                      const empty = m.income === 0 && m.expense === 0;
+                      return (
+                        <tr key={m.key} className={empty ? "text-fg-subtle" : undefined}>
+                          <th scope="row" className="px-5 py-2.5 text-left font-medium text-fg sm:px-6">
+                            {formatMonth(m.month, m.year, language)}
+                          </th>
+                          <td className="tabular px-3 py-2.5 text-right text-fg-muted">{empty ? "—" : money(m.income)}</td>
+                          <td className="tabular px-3 py-2.5 text-right text-fg-muted">{empty ? "—" : money(m.expense)}</td>
+                          <td
+                            className={cn(
+                              "tabular px-3 py-2.5 text-right font-semibold",
+                              empty ? "text-fg-subtle" : m.net > 0 ? "text-positive-fg" : m.net < 0 ? "text-negative-fg" : "text-fg"
+                            )}
+                          >
+                            {empty ? "—" : money(m.net)}
+                          </td>
+                          <td className="tabular px-5 py-2.5 text-right text-fg-muted sm:px-6">{m.income > 0 ? `${m.savingsRate}%` : "—"}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
